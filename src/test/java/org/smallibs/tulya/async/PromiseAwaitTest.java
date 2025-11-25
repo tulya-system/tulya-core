@@ -19,7 +19,7 @@ public class PromiseAwaitTest {
     public void shouldAwaitFor_1_000_000_Tasks() throws Throwable {
         // Given
         var numberOfTasks = 1_000_000;
-        var executor = Executor.ofVirtual();
+        var executor = Execution.ofVirtual();
         var runningTasks = new AtomicInteger(numberOfTasks);
         var barrier = new SolvablePromise<Integer>();
 
@@ -44,7 +44,7 @@ public class PromiseAwaitTest {
     public void shouldSleepAndAwaitFor_1_000_000_Tasks() throws Throwable {
         // Given
         var numberOfTasks = 1_000_000;
-        var executor = Executor.ofVirtual();
+        var executor = Execution.ofVirtual();
         var runningTasks = new AtomicInteger(numberOfTasks);
 
         // When
@@ -65,7 +65,7 @@ public class PromiseAwaitTest {
     @Test
     public void shouldPerformAwait() throws Throwable {
         // Given
-        var executor = Executor.ofVirtual();
+        var executor = Execution.ofVirtual();
         // Saturation ...
         var numberOfTasks = 1_000_000;
         var neverResolved = new SolvablePromise<Integer>();
@@ -95,7 +95,7 @@ public class PromiseAwaitTest {
     @Test
     public void shouldAwaitForPromiseResponse() {
         // Given
-        var executor = Executor.ofVirtual();
+        var executor = Execution.ofVirtual();
 
         //When
         var aLongAddition = Try.handle(() -> {
@@ -113,7 +113,7 @@ public class PromiseAwaitTest {
     // Private section
     //
 
-    private static Promise<Integer> integer(Executor runtime, int value) {
+    private static Promise<Integer> integer(Execution runtime, int value) {
         return runtime.async(() -> {
             Thread.sleep(value);
             return value;

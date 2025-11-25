@@ -8,20 +8,20 @@ import org.smallibs.tulya.standard.Unit;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-final public class Executor {
+final public class Execution {
     private final ExecutorService executorService;
 
-    private Executor(ExecutorService executorService) {
+    private Execution(ExecutorService executorService) {
         this.executorService = executorService;
     }
 
-    <R> Promise<R> async(SupplierWithError<R> callable) {
+    public <R> Promise<R> async(SupplierWithError<R> callable) {
         var promise = new RunnablePromise<>(callable);
         this.executorService.execute(promise);
         return promise;
     }
 
-    Promise<Unit> async(RunnableWithError runnable) {
+    public Promise<Unit> async(RunnableWithError runnable) {
         var promise = new RunnablePromise<>(() -> {
             runnable.run();
             return Unit.unit;
@@ -30,15 +30,15 @@ final public class Executor {
         return promise;
     }
 
-    public static Executor ofVirtual() {
-        return new Executor(Executors.newThreadPerTaskExecutor(Thread.ofVirtual().name("async-virtual").factory()));
+    public static Execution ofVirtual() {
+        return new Execution(Executors.newThreadPerTaskExecutor(Thread.ofVirtual().name("async:virtual").factory()));
     }
 
-    public static Executor ofPlatform() {
-        return new Executor(Executors.newThreadPerTaskExecutor(Thread.ofPlatform().name("async-platform").factory()));
+    public static Execution ofPlatform(int size) {
+        return new Execution(Executors.newFixedThreadPool(size, Thread.ofPlatform().name("async:platform").factory()));
     }
 
-    public static Executor of(ExecutorService executorService) {
-        return new Executor(executorService);
+    public static Execution of(ExecutorService executorService) {
+        return new Execution(executorService);
     }
 }
