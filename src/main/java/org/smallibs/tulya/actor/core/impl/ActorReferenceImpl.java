@@ -40,7 +40,7 @@ public class ActorReferenceImpl<Protocol> implements ActorReference<Protocol> {
 
     @Override
     public <T> ResponseHandler<T> reponseHandler() {
-        return coordinator.responseHandler();
+        return coordinator.responseHandler(address());
     }
 
     @Override

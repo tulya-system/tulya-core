@@ -18,6 +18,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class ActorImpl<Protocol> implements Actor<Protocol> {
 
+    private final ActorAddress address;
     private final ActorRuntime runtime;
     private final ActorRuntimeContext runtimeContext;
     private final Behavior<Protocol> behavior;
@@ -25,13 +26,19 @@ public class ActorImpl<Protocol> implements Actor<Protocol> {
     private final AtomicReference<Status> status;
     private final Queue<Exclusive<Extended<Protocol>>> messages;
 
-    public ActorImpl(ActorRuntime runtime, ActorRuntimeContext runtimeContext, Behavior<Protocol> behavior) {
+    public ActorImpl(ActorAddress address, ActorRuntime runtime, ActorRuntimeContext runtimeContext, Behavior<Protocol> behavior) {
+        this.address = address;
         this.runtime = runtime;
         this.runtimeContext = runtimeContext;
         this.behavior = behavior;
 
         this.status = new AtomicReference<>(Status.WAITING);
         this.messages = new ConcurrentLinkedQueue<>();
+    }
+
+    @Override
+    public String toString() {
+        return "Actor@" + addressOf(this);
     }
 
     // Section: Actor
@@ -41,6 +48,10 @@ public class ActorImpl<Protocol> implements Actor<Protocol> {
     }
 
     // Section: ActorExclusive
+
+    ActorAddress getAddress() {
+        return address;
+    }
 
     void release() {
         var currentActor = runtimeContext.getCurrentActor();
@@ -92,11 +103,14 @@ public class ActorImpl<Protocol> implements Actor<Protocol> {
     }
 
     private void perform(Exclusive<Extended<Protocol>> m) {
-        runtimeContext.registerCurrent(this);
         switch (m) {
-            case Exclusive.Acquire(var p) -> p.solve(Try.success(Unit.unit));
+            case Exclusive.Acquire(var p) -> {
+                runtimeContext.registerCurrent(this);
+                p.solve(Try.success(Unit.unit));
+            }
             case Exclusive.Carried(var xc) -> runtime.perform(() -> {
                 try {
+                    runtimeContext.registerCurrent(this);
                     switch (xc) {
                         case Extended.Deferred(var v) -> runtime.perform(v);
                         case Extended.Dispose(var p) -> {

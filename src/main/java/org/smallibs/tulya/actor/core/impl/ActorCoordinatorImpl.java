@@ -9,6 +9,7 @@ import org.smallibs.tulya.actor.core.ActorUniverse;
 import org.smallibs.tulya.actor.core.BehaviorBuilder;
 import org.smallibs.tulya.actor.core.Extended;
 import org.smallibs.tulya.actor.core.ResponseHandler;
+import org.smallibs.tulya.actor.core.exception.NotAnActorThreadError;
 import org.smallibs.tulya.async.impl.SolvablePromise;
 import org.smallibs.tulya.standard.Try;
 import org.smallibs.tulya.standard.Unit;
@@ -29,7 +30,7 @@ public class ActorCoordinatorImpl implements ActorCoordinator {
     public <Protocol> Try<ActorReference<Protocol>> register(ActorAddress address, BehaviorBuilder<Protocol> builder) {
         var reference = new ActorReferenceImpl<Protocol>(this, address);
         var behavior = builder.apply(reference);
-        var actor = new ActorImpl<>(runtime, runtimeContext, behavior);
+        var actor = new ActorImpl<>(address, runtime, runtimeContext, behavior);
 
         return universe.store(address, actor).map(__ -> reference);
     }
@@ -54,7 +55,12 @@ public class ActorCoordinatorImpl implements ActorCoordinator {
         return universe.<Protocol>retrieve(reference.address()).map(actor -> actor.tell(message)).orElse(false);
     }
 
-    <Protocol> ResponseHandler<Protocol> responseHandler() {
+    <Protocol> ResponseHandler<Protocol> responseHandler(ActorAddress address) {
+        // A response handler is meant to be built in an actor context only
+        if (runtimeContext.getCurrentActor().filter(actor -> actor.getAddress().equals(address)).isEmpty()) {
+            throw new NotAnActorThreadError(address);
+        }
+
         var promise = new SolvablePromise<Protocol>();
         var actorPromise = new ActorPromiseImpl<>(runtimeContext, promise);
 
