@@ -6,17 +6,17 @@ import org.smallibs.tulya.async.impl.SolvablePromise;
 import org.smallibs.tulya.standard.Try;
 
 import java.util.Arrays;
-import java.util.Optional;
 import java.util.Random;
 
-class ActorsIntegrationTest {
+class PingPongActorsIntegrationTest {
 
     @Test
     void shouldPerformPingPong() throws Throwable {
         // Given
+        var random = new Random();
         var coordinator = ActorCoordinator.Companion.build();
-        var alice = coordinator.register(new ActorAddress(Optional.empty(), "Alice"), PingPong.create(new Random(), "Alice")).orElseThrow();
-        var bob = coordinator.register(new ActorAddress(Optional.empty(), "Bob"), PingPong.create(new Random(), "Bob")).orElseThrow();
+        var alice = coordinator.register(ActorAddress.Companion.address("Alice"), PingPong.create(random)).orElseThrow();
+        var bob = coordinator.register(ActorAddress.Companion.address("Bob"), PingPong.create(random)).orElseThrow();
 
         // When
         var result = new SolvablePromise<String>();
@@ -31,18 +31,16 @@ class ActorsIntegrationTest {
 record Ball(int stage, ActorReference<Ball> reference, SolvablePromise<String> winnerIs) {
 }
 
-record PingPong(@Override ActorReference<Ball> self, Random random, String who) implements Behavior<Ball> {
+record PingPong(@Override ActorReference<Ball> self, Random random) implements Behavior<Ball> {
     public void tell(Ball message) {
-        System.out.println(message.stage() + " " + who);
-
         if (message.stage() < random.nextInt(100) + 10) {
             message.reference().tell(new Ball(message.stage() + 1, self, message.winnerIs()));
         } else {
-            message.winnerIs().solve(Try.success(who));
+            message.winnerIs().solve(Try.success(self.address().name()));
         }
     }
 
-    static BehaviorBuilder<Ball> create(Random random, String who) {
-        return reference -> new PingPong(reference, random, who);
+    static BehaviorBuilder<Ball> create(Random random) {
+        return reference -> new PingPong(reference, random);
     }
 }
