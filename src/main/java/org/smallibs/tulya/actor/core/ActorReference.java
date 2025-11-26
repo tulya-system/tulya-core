@@ -10,7 +10,7 @@ public interface ActorReference<Protocol> {
 
     boolean tell(Protocol message);
 
-    boolean dispose();
+    void dispose();
 
     <T> ResponseHandler<T> reponseHandler();
 

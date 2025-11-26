@@ -30,18 +30,14 @@ public class SolvableFuture<R> implements Solvable<R>, Future<R> {
         this.status = new Status.Waiting<>();
     }
 
-    //
-    // Solvable implementation section
-    //
+    // Solvable section
 
     @Override
     public boolean solve(Try<R> value) {
         return this.solve(new Status.Done<>(value));
     }
 
-    //
-    // Runnable implementation section
-    //
+    // Runnable section
 
     @Override
     public boolean cancel(boolean mayInterruptIfRunning) {
@@ -75,27 +71,23 @@ public class SolvableFuture<R> implements Solvable<R>, Future<R> {
             }
         }
 
-        return this.unsafeGet(); // Interrupted, cancelled or done
+        return this.unsafeGet(); // Interrupted, Canceled or Done
     }
 
-    //
     // Package protected section
-    //
 
-    Else<Runnable> ifWaiting(Runnable onWaiting) {
+    boolean onWaiting(Runnable onWaiting) {
         synchronized (this) {
             if (this.status.isWaiting()) {
                 onWaiting.run();
-                return new Else.Nothing<>();
+                return true;
             }
         }
 
-        return new Else.Pending<>();
+        return false;
     }
 
-    //
     // Private section
-    //
 
     private R unsafeGet() throws ExecutionException {
         return switch (status.unsafeGetResult()) {
@@ -169,22 +161,4 @@ public class SolvableFuture<R> implements Solvable<R>, Future<R> {
             }
         }
     }
-
-    sealed interface Else<R> {
-
-        default void orElse(Runnable runnable) {
-            switch (this) {
-                case Else.Pending<R>() -> runnable.run();
-                case Else.Nothing<R>() -> {
-                }
-            }
-        }
-
-        record Pending<R>() implements Else<R> {
-        }
-
-        record Nothing<R>() implements Else<R> {
-        }
-    }
-
 }

@@ -23,7 +23,7 @@ public class ActorImpl<Protocol> implements Actor<Protocol> {
     private final Behavior<Protocol> behavior;
 
     private final AtomicReference<Status> status;
-    private final Queue<Exclusive<Protocol>> messages;
+    private final Queue<Exclusive<Extended<Protocol>>> messages;
 
     public ActorImpl(ActorRuntime runtime, ActorRuntimeContext runtimeContext, Behavior<Protocol> behavior) {
         this.runtime = runtime;
@@ -76,7 +76,7 @@ public class ActorImpl<Protocol> implements Actor<Protocol> {
         return a.behavior.self().address();
     }
 
-    private boolean tell(Exclusive<Protocol> message) {
+    private boolean tell(Exclusive<Extended<Protocol>> message) {
         if (this.messages.offer(message)) {
             this.pump();
             return true;
@@ -87,43 +87,44 @@ public class ActorImpl<Protocol> implements Actor<Protocol> {
 
     private void pump() {
         if (this.status.compareAndSet(Status.WAITING, Status.RUNNING)) {
-            oldestMessage().ifPresentOrElse(
-                    m -> runtime.perform(() -> {
-                        runtimeContext.registerCurrent(this);
-                        System.out.println(this.behavior.self().address() + " <- " + m);
-                        switch (m) {
-                            case Exclusive.Acquire<Protocol>(var p) -> p.solve(Try.success(Unit.unit));
-                            case Exclusive.Carried<Protocol>(var c) -> {
-                                try {
-                                    switch (c) {
-                                        case Extended.Carried<Protocol>(var v) -> behavior.tell(v);
-                                        case Extended.Dispose<Protocol>(var p) -> {
-                                            behavior.dispose();
-                                            p.solve(Try.success(Unit.unit));
-                                        }
-                                        case Extended.Deferred<Protocol>(var v) -> this.runtime.perform(v);
-                                    }
-                                } finally {
-                                    this.runtimeContext.unregisterCurrent();
-                                    this.status.set(Status.WAITING);
-                                    this.pump();
-                                }
-                            }
-                        }
-                    }),
-                    () -> this.status.set(Status.WAITING)
-            );
+            oldestMessage().ifPresentOrElse(this::perform, () -> status.set(Status.WAITING));
         }
     }
 
-    private Optional<Exclusive<Protocol>> oldestMessage() {
+    private void perform(Exclusive<Extended<Protocol>> m) {
+        runtimeContext.registerCurrent(this);
+        switch (m) {
+            case Exclusive.Acquire(var p) -> p.solve(Try.success(Unit.unit));
+            case Exclusive.Carried(var xc) -> runtime.perform(() -> {
+                try {
+                    switch (xc) {
+                        case Extended.Deferred(var v) -> runtime.perform(v);
+                        case Extended.Dispose(var p) -> {
+                            try {
+                                behavior.dispose();
+                            } finally {
+                                p.solve(Try.success(Unit.unit));
+                            }
+                        }
+                        case Extended.Carried(var ec) -> behavior.tell(ec);
+                    }
+                } finally {
+                    runtimeContext.unregisterCurrent();
+                    status.set(Status.WAITING);
+                    pump();
+                }
+            });
+        }
+    }
+
+    private Optional<Exclusive<Extended<Protocol>>> oldestMessage() {
         return Optional.ofNullable(messages.poll());
     }
 
     private enum Status {WAITING, RUNNING}
 
     private sealed interface Exclusive<Protocol> {
-        record Carried<Protocol>(Extended<Protocol> message) implements Exclusive<Protocol> {
+        record Carried<Protocol>(Protocol message) implements Exclusive<Protocol> {
         }
 
         record Acquire<Protocol>(SolvablePromise<Unit> barrier) implements Exclusive<Protocol> {

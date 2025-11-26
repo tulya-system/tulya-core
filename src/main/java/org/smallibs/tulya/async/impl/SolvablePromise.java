@@ -82,9 +82,9 @@ public class SolvablePromise<T> implements Solvable<T>, Promise<T> {
 
     @Override
     public Promise<T> onComplete(Consumer<? super Try<T>> consumer) {
-        this.future
-                .ifWaiting(() -> this.consumers.add(consumer))
-                .orElse(() -> consumer.accept(getResult()));
+        if (!this.future.onWaiting(() -> this.consumers.add(consumer))) {
+            consumer.accept(getResult());
+        }
 
         return this;
     }

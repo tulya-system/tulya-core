@@ -23,8 +23,9 @@ public class ActorReferenceImpl<Protocol> implements ActorReference<Protocol> {
     }
 
     @Override
+
     public <AnotherProtocol> Try<ActorReference<AnotherProtocol>> create(String name, BehaviorBuilder<AnotherProtocol> actor) {
-        return coordinator.register(address, name, actor);
+        return coordinator.register(address.child(name), actor);
     }
 
     @Override
@@ -33,8 +34,8 @@ public class ActorReferenceImpl<Protocol> implements ActorReference<Protocol> {
     }
 
     @Override
-    public boolean dispose() {
-        return coordinator.unregister(this);
+    public void dispose() {
+        coordinator.unregister(this.address);
     }
 
     @Override

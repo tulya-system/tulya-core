@@ -3,10 +3,12 @@ package org.smallibs.tulya.actor.core;
 import java.util.Optional;
 
 public record ActorAddress(Optional<ActorAddress> parent, String name) {
-    public static ActorAddress SYSTEM = new ActorAddress(Optional.empty(), "system");
+    public ActorAddress child(String name) {
+        return new ActorAddress(Optional.of(this), name);
+    }
 
     public boolean isParentOf(ActorAddress address) {
-        return parent.map(p -> p.equals(address)).orElse(false);
+        return address.parent.map(parent -> parent.equals(this)).orElse(false);
     }
 
     public boolean isChildOf(ActorAddress address) {
@@ -14,7 +16,7 @@ public record ActorAddress(Optional<ActorAddress> parent, String name) {
     }
 
     public boolean isAncestorOf(ActorAddress address) {
-        return parent.map(p -> p.equals(address) || p.isParentOf(address)).orElse(false);
+        return address.parent.map(parent -> parent.equals(this) || this.isAncestorOf(parent)).orElse(false);
     }
 
     public boolean isDescendantOf(ActorAddress address) {
@@ -24,5 +26,11 @@ public record ActorAddress(Optional<ActorAddress> parent, String name) {
     @Override
     public String toString() {
         return parent.map(p -> p + "/" + name).orElse(name);
+    }
+
+    public static class Companion {
+        public static ActorAddress address(String name) {
+            return new ActorAddress(Optional.empty(), name);
+        }
     }
 }

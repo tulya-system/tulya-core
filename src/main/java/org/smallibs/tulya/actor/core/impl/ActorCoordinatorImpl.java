@@ -1,6 +1,5 @@
 package org.smallibs.tulya.actor.core.impl;
 
-import org.smallibs.tulya.actor.core.Actor;
 import org.smallibs.tulya.actor.core.ActorAddress;
 import org.smallibs.tulya.actor.core.ActorCoordinator;
 import org.smallibs.tulya.actor.core.ActorReference;
@@ -13,8 +12,6 @@ import org.smallibs.tulya.actor.core.ResponseHandler;
 import org.smallibs.tulya.async.impl.SolvablePromise;
 import org.smallibs.tulya.standard.Try;
 import org.smallibs.tulya.standard.Unit;
-
-import java.util.Optional;
 
 public class ActorCoordinatorImpl implements ActorCoordinator {
 
@@ -29,36 +26,32 @@ public class ActorCoordinatorImpl implements ActorCoordinator {
     }
 
     @Override
-    public <Protocol> Try<ActorReference<Protocol>> register(ActorAddress parent, String name, BehaviorBuilder<Protocol> builder) {
-        var address = new ActorAddress(Optional.of(parent), name);
+    public <Protocol> Try<ActorReference<Protocol>> register(ActorAddress address, BehaviorBuilder<Protocol> builder) {
         var reference = new ActorReferenceImpl<Protocol>(this, address);
         var behavior = builder.apply(reference);
         var actor = new ActorImpl<>(runtime, runtimeContext, behavior);
 
-        if (universe.register(address, actor)) {
-            return Try.success(reference);
-        } else {
-            return Try.failure(new RuntimeException("Actor already registered"));
-        }
+        return universe.store(address, actor).map(__ -> reference);
     }
 
     @Override
-    public <Protocol> boolean unregister(ActorReference<Protocol> reference) {
+    public void unregister(ActorAddress address) {
+        // Unregister children actors | like processes
+        universe.remove(address).forEach(this::unregister);
+
         try {
             var barrier = new SolvablePromise<Unit>();
-            retrieveActor(reference).map(actor -> actor.tell(new Extended.Dispose<>(barrier)));
+            universe.retrieve(address).map(actor -> actor.tell(new Extended.Dispose<>(barrier)));
             barrier.await();
         } catch (Throwable ignored) {
             // consumed
         }
-
-        return universe.unregister(reference.address());
     }
 
     // Package protected section
 
     <Protocol> boolean tell(ActorReference<Protocol> reference, Extended<Protocol> message) {
-        return retrieveActor(reference).map(actor -> actor.tell(message)).orElse(false);
+        return universe.<Protocol>retrieve(reference.address()).map(actor -> actor.tell(message)).orElse(false);
     }
 
     <Protocol> ResponseHandler<Protocol> responseHandler() {
@@ -66,12 +59,6 @@ public class ActorCoordinatorImpl implements ActorCoordinator {
         var actorPromise = new ActorPromiseImpl<>(runtimeContext, promise);
 
         return new ResponseHandlerImpl<>(actorPromise, promise);
-    }
-
-    // Private section
-
-    private <Protocol> Optional<Actor<Protocol>> retrieveActor(ActorReference<Protocol> reference) {
-        return universe.retrieve(reference.address());
     }
 
 }

@@ -6,16 +6,17 @@ import org.smallibs.tulya.async.impl.SolvablePromise;
 import org.smallibs.tulya.standard.Try;
 
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.Random;
 
-class BehaviorTest {
+class ActorsIntegrationTest {
 
     @Test
     void shouldPerformPingPong() throws Throwable {
         // Given
-        var coordinator = ActorCoordinator.create();
-        var alice = coordinator.register(ActorAddress.SYSTEM, "alice", PingPong.create(new Random(), "Alice")).orElseThrow();
-        var bob = coordinator.register(ActorAddress.SYSTEM, "bob", PingPong.create(new Random(), "Bob")).orElseThrow();
+        var coordinator = ActorCoordinator.Companion.build();
+        var alice = coordinator.register(new ActorAddress(Optional.empty(), "Alice"), PingPong.create(new Random(), "Alice")).orElseThrow();
+        var bob = coordinator.register(new ActorAddress(Optional.empty(), "Bob"), PingPong.create(new Random(), "Bob")).orElseThrow();
 
         // When
         var result = new SolvablePromise<String>();
