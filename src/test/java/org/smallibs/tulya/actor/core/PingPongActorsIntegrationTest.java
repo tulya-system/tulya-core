@@ -21,7 +21,7 @@ class PingPongActorsIntegrationTest {
             var bob = coordinator.register(address("Bob"), PingPong.create(random)).orElseThrow();
 
             // When
-            var sent = alice.<String>tell(s -> new Ball(1, bob, s));
+            var sent = alice.<String>ask(s -> new Ball(1, bob, s));
 
             // Then
             Assertions.assertTrue(Arrays.asList("Alice", "Bob").contains(sent.await()));
@@ -33,9 +33,9 @@ record Ball(int stage, ActorReference<Ball> reference, Solvable<String> winnerIs
 }
 
 record PingPong(@Override ActorReference<Ball> self, Random random) implements Behavior<Ball> {
-    public void tell(Ball message) {
+    public void ask(Ball message) {
         if (message.stage() < random.nextInt(100) + 10) {
-            message.reference().tell(new Ball(message.stage() + 1, self, message.winnerIs()));
+            message.reference().ask(new Ball(message.stage() + 1, self, message.winnerIs()));
         } else {
             message.winnerIs().solve(Try.success(self.address().name()));
         }

@@ -19,7 +19,7 @@ public class ActorPromiseImpl<T> implements Promise<T> {
         this(runtime, new SolvablePromise<>());
     }
 
-    public ActorPromiseImpl(ActorRuntimeContext runtime, SolvablePromise<T> promise) {
+    ActorPromiseImpl(ActorRuntimeContext runtime, SolvablePromise<T> promise) {
         this.runtime = runtime;
         this.promise = promise;
     }
@@ -31,11 +31,11 @@ public class ActorPromiseImpl<T> implements Promise<T> {
         if (mayBeActor.isPresent()) {
             var actor = mayBeActor.get();
 
-            actor.release();
             try {
+                actor.release(Duration.ZERO);
                 return promise.await();
             } finally {
-                actor.acquire();
+                actor.acquire(Duration.ZERO);
             }
         } else {
             return promise.await();
@@ -49,11 +49,11 @@ public class ActorPromiseImpl<T> implements Promise<T> {
         if (mayBeActor.isPresent()) {
             var actor = mayBeActor.get();
 
-            actor.release();
             try {
+                actor.release(duration);
                 return promise.await(duration);
             } finally {
-                actor.acquire();
+                actor.acquire(duration);
             }
         } else {
             return promise.await(duration);
@@ -100,8 +100,6 @@ public class ActorPromiseImpl<T> implements Promise<T> {
 
     @Override
     public Promise<T> onComplete(Consumer<? super Try<T>> fn) {
-        var mayBeActor = runtime.getCurrentActor();
-
         runtime.getCurrentActor().ifPresentOrElse(
                 actor -> this.promise.onComplete(e -> actor.tell(new Deferred<>(() -> fn.accept(e)))),
                 () -> this.promise.onComplete(fn)

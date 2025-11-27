@@ -29,7 +29,7 @@ public class ActorReferenceImpl<Protocol> implements ActorReference<Protocol> {
     }
 
     @Override
-    public boolean tell(Protocol message) {
+    public boolean ask(Protocol message) {
         return coordinator.tell(this, new Extended.Carried<>(message));
     }
 

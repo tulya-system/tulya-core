@@ -5,6 +5,9 @@ import org.smallibs.tulya.standard.Unit;
 
 public sealed interface Extended<Protocol> {
 
+    record Activate<Protocol>() implements Extended<Protocol> {
+    }
+
     record Deferred<Protocol>(Runnable runnable) implements Extended<Protocol> {
     }
 

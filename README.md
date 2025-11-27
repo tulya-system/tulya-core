@@ -8,30 +8,119 @@ Indirect and direct asynchronous programming style applied to Java and a minimal
 
 ## Async / Await
 
+### Taste of Tulya Async / Await
+
+```Java
+
+@Test
+public void shouldAwaitFor_1_000_000_Tasks() throws Throwable {
+    // Given
+    var numberOfTasks = 1_000_000;
+    var executor = Execution.ofVirtual();
+
+    var runningTasks = new AtomicInteger(numberOfTasks);
+
+    // When
+    var barrier = new SolvablePromise<Unit>();
+    
+    for (var i = 0; i < numberOfTasks; i++) {
+        executor.async(() -> {
+            barrier.await();
+            runningTasks.decrementAndGet();
+        });
+    }
+
+    barrier.success(Unit.unit);
+
+    // Then
+    Awaitility.await().until(() -> runningTasks.get() == 0);
+}
+```
+
 ## Actor System
+
+### Taste of Tulya Actors
+
+#### Protocol
+
+The protocol defines the message format and the response type.
+
+```Java
+record Fibonacci(int value, Solvable<Integer> response) {
+    // Message factory
+    static BehaviorCall<Fibonacci, Integer> build(int value) {
+        return solvable -> new Fibonacci(value, solvable);
+    }
+}
+```
+
+#### Actor
+
+In this example, the actor computes the Fibonacci number with a direct computation style using `await`.
+
+```Java
+record DirectComputation(ActorReference<Fibonacci> self) implements Behavior<Fibonacci> {
+    @Override
+    public void ask(Fibonacci message) {
+
+        if (message.value() < 2) {
+            message.response().success(message.value());
+        } else {
+            var result = Try.handle(() -> {
+                var minus1 = self().ask(Fibonacci.build(message.value() - 1));
+                var minus2 = self().ask(Fibonacci.build(message.value() - 2));
+
+                return minus1.await() + minus2.await();
+            });
+
+            message.response().solve(result);
+        }
+    }
+}
+```
+
+#### Execution
+
+Now, let's compute `Fibonacci` thanks to the previous actor.
+
+```Java
+@Test
+void shouldComputeDirectFibonacci() throws Throwable {
+    // Given
+    try (var coordinator = ActorCoordinator.Companion.build()) {
+        var fibonacci = coordinator.register(address("fibonacci"), DirectComputation::new).orElseThrow();
+
+        // When
+        var result = fibonacci.ask(Fibonacci.build(19));
+
+        // Then
+        Assertions.assertEquals(4181, result.await());
+    }
+}
+```
 
 ## License
 
 ```
-    MIT License
-    
-    Copyright (c) 2025 Didier Plaindoux
-    
-    Permission is hereby granted, free of charge, to any person obtaining a copy
-    of this software and associated documentation files (the "Software"), to deal
-    in the Software without restriction, including without limitation the rights
-    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-    copies of the Software, and to permit persons to whom the Software is
-    furnished to do so, subject to the following conditions:
-    
-    The above copyright notice and this permission notice shall be included in all
-    copies or substantial portions of the Software.
-    
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-    SOFTWARE.
+MIT License
+
+Copyright (c) 2025 Didier Plaindoux
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 ```

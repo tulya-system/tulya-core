@@ -6,7 +6,7 @@ import org.smallibs.tulya.standard.Unit;
 
 public record SystemBehavior(ActorReference<Unit> self) implements Behavior<Unit> {
     @Override
-    public void tell(Unit message) {
+    public void ask(Unit message) {
         // Do nothing for the moment
     }
 }

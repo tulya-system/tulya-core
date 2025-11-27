@@ -11,7 +11,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
 import static java.time.Duration.ofMinutes;
-import static java.time.Duration.ofSeconds;
 
 public class PromiseAwaitTest {
 
@@ -24,20 +23,17 @@ public class PromiseAwaitTest {
         var barrier = new SolvablePromise<Integer>();
 
         // When
-        var promises = IntStream.range(0, numberOfTasks)
-                .mapToObj(__ ->
-                        executor.async(() -> {
-                            barrier.await();
-                            runningTasks.decrementAndGet();
-                        })
-                ).toArray(Promise[]::new);
+        var promises = IntStream.range(0, numberOfTasks).mapToObj(__ ->
+                executor.async(() -> {
+                    barrier.await();
+                    runningTasks.decrementAndGet();
+                })
+        ).toArray(Promise[]::new);
 
         barrier.solve(Try.success(1));
 
-        Promises.join(promises).await();
-
         // Then
-        Assertions.assertEquals(0, runningTasks.get());
+        Awaitility.await().until(() -> runningTasks.get() == 0);
     }
 
     @Test

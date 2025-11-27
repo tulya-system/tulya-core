@@ -2,15 +2,17 @@ package org.smallibs.tulya.actor.core.impl;
 
 import org.smallibs.tulya.actor.core.Actor;
 import org.smallibs.tulya.actor.core.ActorAddress;
+import org.smallibs.tulya.actor.core.ActorEventLogger;
 import org.smallibs.tulya.actor.core.ActorRuntime;
 import org.smallibs.tulya.actor.core.ActorRuntimeContext;
 import org.smallibs.tulya.actor.core.Behavior;
 import org.smallibs.tulya.actor.core.Extended;
+import org.smallibs.tulya.async.Solvable;
 import org.smallibs.tulya.async.impl.SolvablePromise;
 import org.smallibs.tulya.standard.Try;
 import org.smallibs.tulya.standard.Unit;
 
-import java.text.MessageFormat;
+import java.time.Duration;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -21,15 +23,17 @@ public class ActorImpl<Protocol> implements Actor<Protocol> {
     private final ActorAddress address;
     private final ActorRuntime runtime;
     private final ActorRuntimeContext runtimeContext;
+    private final ActorEventLogger logger;
     private final Behavior<Protocol> behavior;
 
     private final AtomicReference<Status> status;
     private final Queue<Exclusive<Extended<Protocol>>> messages;
 
-    public ActorImpl(ActorAddress address, ActorRuntime runtime, ActorRuntimeContext runtimeContext, Behavior<Protocol> behavior) {
+    public ActorImpl(ActorAddress address, ActorRuntime runtime, ActorRuntimeContext runtimeContext, ActorEventLogger logger, Behavior<Protocol> behavior) {
         this.address = address;
         this.runtime = runtime;
         this.runtimeContext = runtimeContext;
+        this.logger = logger;
         this.behavior = behavior;
 
         this.status = new AtomicReference<>(Status.WAITING);
@@ -53,35 +57,42 @@ public class ActorImpl<Protocol> implements Actor<Protocol> {
         return address;
     }
 
-    void release() {
-        var currentActor = runtimeContext.getCurrentActor();
+    void release(Duration duration) {
+        var activeActorAddress = getActiveActorAddress();
 
-        if (currentActor.map(a -> a != this).orElse(false)) {
-            var selfAddress = addressOf(this);
-            var currentAddress = currentActor.map(a -> addressOf(a).toString()).orElse("N/A");
+        if (activeActorAddress.map(a -> !a.equals(this.address())).orElse(false)) {
+            var self = addressOf(this);
+            var current = activeActorAddress.map(ActorAddress::toString).orElse("N/A");
 
-            throw new IllegalStateException(MessageFormat.format(
-                    "Waiting for {0} while current is {1}",
-                    selfAddress,
-                    currentAddress)
-            );
+            throw new IllegalStateException("Waiting for %s and not %s".formatted(self, current));
         }
 
         if (status.compareAndSet(Status.RUNNING, Status.WAITING)) {
+            logger.log(activeActorAddress, address, new ActorEventLogger.Event.StartAwait(duration));
             runtimeContext.unregisterCurrent();
             pump();
         } else {
-            throw new IllegalStateException("Actor is not processing a message");
+            throw new IllegalStateException("Actor %s is not processing a message".formatted(addressOf(this)));
         }
     }
 
-    void acquire() throws Throwable {
-        var barrier = new SolvablePromise<Unit>();
-        tell(new Exclusive.Acquire<>(barrier));
-        barrier.await();
+    void acquire(Duration duration) throws Throwable {
+        try {
+            var barrier = new SolvablePromise<Unit>();
+            tell(new Exclusive.Acquire<>(duration.toString(), barrier));
+            barrier.await();
+        } finally {
+            runtimeContext.registerCurrent(this);
+            logger.log(getActiveActorAddress(), address, new ActorEventLogger.Event.EndAwait(duration));
+        }
+
     }
 
     // Private section
+
+    private Optional<ActorAddress> getActiveActorAddress() {
+        return runtimeContext.getCurrentActor().map(ActorImpl::addressOf);
+    }
 
     private static ActorAddress addressOf(ActorImpl<?> a) {
         return a.behavior.self().address();
@@ -89,6 +100,7 @@ public class ActorImpl<Protocol> implements Actor<Protocol> {
 
     private boolean tell(Exclusive<Extended<Protocol>> message) {
         if (messages.offer(message)) {
+            logger.log(getActiveActorAddress(), address, new ActorEventLogger.Event.Submitted<>(message));
             pump();
             return true;
         } else {
@@ -102,27 +114,31 @@ public class ActorImpl<Protocol> implements Actor<Protocol> {
         }
     }
 
-    private void perform(Exclusive<Extended<Protocol>> m) {
-        switch (m) {
-            case Exclusive.Acquire(var p) -> {
-                runtimeContext.registerCurrent(this);
-                p.solve(Try.success(Unit.unit));
+    private void perform(Exclusive<Extended<Protocol>> message) {
+        switch (message) {
+            case Exclusive.Acquire(var ignored, var barrier) -> {
+                logger.log(getActiveActorAddress(), address, new ActorEventLogger.Event.Start<>(message));
+                barrier.solve(Try.success(Unit.unit));
+                logger.log(getActiveActorAddress(), address, new ActorEventLogger.Event.End<>(message));
             }
-            case Exclusive.Carried(var xc) -> runtime.perform(() -> {
+            case Exclusive.Carried(var extendedCarried) -> runtime.perform(() -> {
                 try {
                     runtimeContext.registerCurrent(this);
-                    switch (xc) {
-                        case Extended.Deferred(var v) -> runtime.perform(v);
-                        case Extended.Dispose(var p) -> {
+                    logger.log(getActiveActorAddress(), address, new ActorEventLogger.Event.Start<>(message));
+                    switch (extendedCarried) {
+                        case Extended.Activate() -> behavior.activate();
+                        case Extended.Deferred(var deferred) -> runtime.perform(deferred);
+                        case Extended.Dispose(var barrier) -> {
                             try {
                                 behavior.dispose();
                             } finally {
-                                p.solve(Try.success(Unit.unit));
+                                barrier.solve(Try.success(Unit.unit));
                             }
                         }
-                        case Extended.Carried(var ec) -> behavior.tell(ec);
+                        case Extended.Carried(var carried) -> behavior.ask(carried);
                     }
                 } finally {
+                    logger.log(getActiveActorAddress(), address, new ActorEventLogger.Event.End<>(message));
                     runtimeContext.unregisterCurrent();
                     status.set(Status.WAITING);
                     pump();
@@ -141,7 +157,7 @@ public class ActorImpl<Protocol> implements Actor<Protocol> {
         record Carried<Protocol>(Protocol message) implements Exclusive<Protocol> {
         }
 
-        record Acquire<Protocol>(SolvablePromise<Unit> barrier) implements Exclusive<Protocol> {
+        record Acquire<Protocol>(String description, Solvable<Unit> barrier) implements Exclusive<Protocol> {
         }
     }
 

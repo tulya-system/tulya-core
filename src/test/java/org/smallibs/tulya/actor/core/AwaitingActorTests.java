@@ -22,7 +22,7 @@ class AwaitingActorTests {
 
             // When
             var promise = new SolvablePromise<Unit>();
-            sender.tell(new Request(promise, Duration.ofMillis(1000), receiver));
+            sender.ask(new Request(promise, Duration.ofMillis(1000), receiver));
 
             // Then
             Assertions.assertEquals(Unit.unit, promise.await(Duration.ofMillis(1200)));
@@ -36,11 +36,11 @@ class AwaitingActorTests {
             var sender = coordinator.register(address("sender"), sender()).orElseThrow();
             var receiver = coordinator.register(address("receiver"), receiver(Try.success(Unit.unit))).orElseThrow();
 
-            sender.tell(new Request(new SolvablePromise<>(), Duration.ofMillis(1000), receiver));
+            sender.ask(new Request(new SolvablePromise<>(), Duration.ofMillis(1000), receiver));
 
             // When
             var promise = new SolvablePromise<Unit>();
-            sender.tell(new Request(promise, Duration.ofMillis(2000), receiver));
+            sender.ask(new Request(promise, Duration.ofMillis(2000), receiver));
 
             // Then
             Assertions.assertEquals(Unit.unit, promise.await(Duration.ofMillis(2200)));
@@ -58,8 +58,8 @@ class AwaitingActorTests {
                     }
 
                     @Override
-                    public void tell(Request message) {
-                        var promise = message.receiver.<Unit>tell(solvable -> new Ask(message.duration, solvable));
+                    public void ask(Request message) {
+                        var promise = message.receiver.<Unit>ask(solvable -> new Ask(message.duration, solvable));
                         message.response.solve(Try.handle(() -> promise.await()));
                     }
                 };
@@ -74,7 +74,7 @@ class AwaitingActorTests {
                     }
 
                     @Override
-                    public void tell(Ask message) {
+                    public void ask(Ask message) {
                         self().delay(message.duration);
                         System.out.println("Receiver sleep " + message.duration.toMillis() + " ms");
                         message.responseHandler().solve(response);

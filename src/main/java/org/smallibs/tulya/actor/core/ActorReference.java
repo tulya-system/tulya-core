@@ -18,11 +18,11 @@ public interface ActorReference<Protocol> {
         return tryCreate(name, actor).orElseThrow();
     }
 
-    boolean tell(Protocol message);
+    boolean ask(Protocol message);
 
-    default <R> Promise<R> tell(BehaviorCall<Protocol, R> message) {
+    default <R> Promise<R> ask(BehaviorCall<Protocol, R> message) {
         var response = this.<R>reponseHandler();
-        tell(message.apply(response.solvable()));
+        ask(message.apply(response.solvable()));
         return response;
     }
 

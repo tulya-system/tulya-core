@@ -2,6 +2,7 @@ package org.smallibs.tulya.actor.core.impl;
 
 import org.smallibs.tulya.actor.core.ActorAddress;
 import org.smallibs.tulya.actor.core.ActorCoordinator;
+import org.smallibs.tulya.actor.core.ActorEventLogger;
 import org.smallibs.tulya.actor.core.ActorReference;
 import org.smallibs.tulya.actor.core.ActorRuntime;
 import org.smallibs.tulya.actor.core.ActorRuntimeContext;
@@ -21,11 +22,14 @@ public class ActorCoordinatorImpl implements ActorCoordinator {
     private final ActorUniverse universe;
     private final ActorRuntime runtime;
     private final ActorRuntimeContext runtimeContext;
+    private final ActorEventLogger logger;
 
     public ActorCoordinatorImpl(ActorUniverse universe, ActorRuntime runtime, ActorRuntimeContext runtimeContext) {
         this.universe = universe;
         this.runtime = runtime;
         this.runtimeContext = runtimeContext;
+
+        this.logger = new StdoutActorEventLoggerImpl();
     }
 
     @Override
@@ -37,7 +41,9 @@ public class ActorCoordinatorImpl implements ActorCoordinator {
     public <Protocol> Try<ActorReference<Protocol>> register(ActorAddress address, BehaviorBuilder<Protocol> builder) {
         var reference = new ActorReferenceImpl<Protocol>(this, address);
         var behavior = builder.apply(reference);
-        var actor = new ActorImpl<>(address, runtime, runtimeContext, behavior);
+        var actor = new ActorImpl<>(address, runtime, runtimeContext, logger, behavior);
+
+        actor.tell(new Extended.Activate<>());
 
         return universe.store(address, actor).map(__ -> reference);
     }
