@@ -87,7 +87,7 @@ record MixedComputation(ActorReference<Fibonacci> self) implements Behavior<Fibo
             message.response().success(message.value());
         } else {
             self().ask(fibonacci(message.value() - 1))
-                    .flatMap(i1 -> Promise.handle(() -> {
+                    .flatMap(Promise.handle(i1 -> {
                         var i2 = self().ask(fibonacci(message.value() - 2));
                         return i1 + i2.await();
                     }))

@@ -1,5 +1,6 @@
 package org.smallibs.tulya.async;
 
+import org.smallibs.tulya.lang.FunctionWithError;
 import org.smallibs.tulya.lang.SupplierWithError;
 import org.smallibs.tulya.standard.Try;
 
@@ -20,6 +21,10 @@ public interface Promise<T> {
 
     static <R> Promise<R> handle(SupplierWithError<R> supplier) {
         return Try.handle(supplier).toPromise();
+    }
+
+    static <I, R> Function<I, Promise<R>> handle(FunctionWithError<I, R> supplier) {
+        return i -> Promise.handle(() -> supplier.apply(i));
     }
 
     T await() throws Throwable;

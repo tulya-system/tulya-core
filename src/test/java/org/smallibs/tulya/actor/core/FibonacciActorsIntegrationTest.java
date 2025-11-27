@@ -81,7 +81,7 @@ public class FibonacciActorsIntegrationTest {
                 message.response().success(message.value());
             } else {
                 self().ask(fibonacci(message.value() - 1))
-                        .flatMap(i1 -> Promise.handle(() ->
+                        .flatMap(Promise.handle(i1 ->
                                 i1 + self().ask(fibonacci(message.value() - 2)).await()
                         ))
                         .onComplete(e -> message.response().solve(e));
