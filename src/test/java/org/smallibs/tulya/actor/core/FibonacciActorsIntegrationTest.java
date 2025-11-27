@@ -2,6 +2,7 @@ package org.smallibs.tulya.actor.core;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.smallibs.tulya.async.Promise;
 import org.smallibs.tulya.async.Solvable;
 import org.smallibs.tulya.standard.Try;
 
@@ -19,6 +20,20 @@ public class FibonacciActorsIntegrationTest {
         // Given
         try (var coordinator = ActorCoordinator.Companion.build()) {
             var fibonacci = coordinator.register(address("fibonacci"), DirectComputation::new).orElseThrow();
+
+            // When
+            var result = fibonacci.ask(fibonacci(fibonacciLimit));
+
+            // Then
+            Assertions.assertEquals(4181, result.await());
+        }
+    }
+
+    @Test
+    void shouldComputeMixedFibonacci() throws Throwable {
+        // Given
+        try (var coordinator = ActorCoordinator.Companion.build()) {
+            var fibonacci = coordinator.register(address("fibonacci"), MixedComputation::new).orElseThrow();
 
             // When
             var result = fibonacci.ask(fibonacci(fibonacciLimit));
@@ -55,6 +70,21 @@ public class FibonacciActorsIntegrationTest {
                                 self().ask(fibonacci(message.value() - 2)).map(i2 -> i1 + i2)
                         )
                         .onComplete(message.response()::solve);
+            }
+        }
+    }
+
+    record MixedComputation(ActorReference<Fibonacci> self) implements Behavior<Fibonacci> {
+        @Override
+        public void ask(Fibonacci message) {
+            if (message.value < 2) {
+                message.response().success(message.value());
+            } else {
+                self().ask(fibonacci(message.value() - 1))
+                        .flatMap(i1 -> Promise.handle(() ->
+                                i1 + self().ask(fibonacci(message.value() - 2)).await()
+                        ))
+                        .onComplete(e -> message.response().solve(e));
             }
         }
     }

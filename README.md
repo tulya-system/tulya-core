@@ -11,9 +11,7 @@ Indirect and direct asynchronous programming style applied to Java and a minimal
 ### Taste of Tulya Async / Await
 
 ```Java
-
-@Test
-public void shouldAwaitFor_1_000_000_Tasks() throws Throwable {
+public void shouldAwaitFor_1_000_000_Tasks() {
     // Given
     var numberOfTasks = 1_000_000;
     var executor = Execution.ofVirtual();
@@ -22,7 +20,7 @@ public void shouldAwaitFor_1_000_000_Tasks() throws Throwable {
 
     // When
     var barrier = new SolvablePromise<Unit>();
-    
+
     for (var i = 0; i < numberOfTasks; i++) {
         executor.async(() -> {
             barrier.await();
@@ -43,7 +41,8 @@ public void shouldAwaitFor_1_000_000_Tasks() throws Throwable {
 
 #### Protocol
 
-The protocol defines the message format and the response type.
+The protocol defines messages corresponding responses type. In this example, the actor supports only one kind of
+message: `Fibonacci`. The message contains the value to compute and a `Solvable` response carrier.
 
 ```Java
 record Fibonacci(int value, Solvable<Integer> response) {
@@ -79,12 +78,31 @@ record DirectComputation(ActorReference<Fibonacci> self) implements Behavior<Fib
 }
 ```
 
+Of course, indirect and direct styles can be used together.
+
+```Java
+record IndirectComputation(ActorReference<Fibonacci> self) implements Behavior<Fibonacci> {
+    @Override
+    public void ask(Fibonacci message) {
+        if (message.value < 2) {
+            message.response().success(message.value());
+        } else {
+            self().ask(fibonacci(message.value() - 1))
+                    .flatMap(i1 -> Promise.handle(() -> {
+                        var i2 = self().ask(fibonacci(message.value() - 2));
+                        return i1 + i2.await();
+                    }))
+                    .onComplete(e -> message.response().solve(e));
+        }
+    }
+}
+```
+
 #### Execution
 
 Now, let's compute `Fibonacci` thanks to the previous actor.
 
 ```Java
-@Test
 void shouldComputeDirectFibonacci() throws Throwable {
     // Given
     try (var coordinator = ActorCoordinator.Companion.build()) {
