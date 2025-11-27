@@ -2,7 +2,7 @@ package org.smallibs.tulya.actor.core;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.smallibs.tulya.async.impl.SolvablePromise;
+import org.smallibs.tulya.async.Solvable;
 import org.smallibs.tulya.standard.Try;
 
 import java.util.Arrays;
@@ -15,22 +15,21 @@ class PingPongActorsIntegrationTest {
     @Test
     void shouldPerformPingPong() throws Throwable {
         // Given
-        var random = new Random();
-        var coordinator = ActorCoordinator.Companion.build();
-        var alice = coordinator.register(address("Alice"), PingPong.create(random)).orElseThrow();
-        var bob = coordinator.register(address("Bob"), PingPong.create(random)).orElseThrow();
+        try (var coordinator = ActorCoordinator.Companion.build()) {
+            var random = new Random();
+            var alice = coordinator.register(address("Alice"), PingPong.create(random)).orElseThrow();
+            var bob = coordinator.register(address("Bob"), PingPong.create(random)).orElseThrow();
 
-        // When
-        var result = new SolvablePromise<String>();
-        var sent = alice.tell(new Ball(1, bob, result));
+            // When
+            var sent = alice.<String>tell(s -> new Ball(1, bob, s));
 
-        // Then
-        Assertions.assertTrue(sent);
-        Assertions.assertTrue(Arrays.asList("Alice", "Bob").contains(result.await()));
+            // Then
+            Assertions.assertTrue(Arrays.asList("Alice", "Bob").contains(sent.await()));
+        }
     }
 }
 
-record Ball(int stage, ActorReference<Ball> reference, SolvablePromise<String> winnerIs) {
+record Ball(int stage, ActorReference<Ball> reference, Solvable<String> winnerIs) {
 }
 
 record PingPong(@Override ActorReference<Ball> self, Random random) implements Behavior<Ball> {

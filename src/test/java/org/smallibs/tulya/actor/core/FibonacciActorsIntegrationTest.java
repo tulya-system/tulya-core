@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Test;
 import org.smallibs.tulya.async.Solvable;
 import org.smallibs.tulya.standard.Try;
 
+import java.time.Duration;
+
 import static org.smallibs.tulya.actor.core.ActorAddress.Companion.address;
 import static org.smallibs.tulya.actor.core.FibonacciActorsIntegrationTest.Fibonacci.Companion.fibonacci;
 
