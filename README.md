@@ -81,7 +81,7 @@ record DirectComputation(ActorReference<Fibonacci> self) implements Behavior<Fib
 Of course, indirect and direct styles can be used together.
 
 ```Java
-record IndirectComputation(ActorReference<Fibonacci> self) implements Behavior<Fibonacci> {
+record MixedComputation(ActorReference<Fibonacci> self) implements Behavior<Fibonacci> {
     @Override
     public void ask(Fibonacci message) {
         if (message.value < 2) {
