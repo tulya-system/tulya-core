@@ -8,7 +8,9 @@ Indirect and direct asynchronous programming style applied to Java and a minimal
 
 ### Introduction
 
-The `Promise`[1] concept in programming languages was introduced by **Daniel P. Friedman** and **David S. Wise** in 1976. In this paper, lazy evaluation is introduced for suspending cons.
+The `Promise`[1] concept in programming languages was introduced by **Daniel P. Friedman** and **David S. Wise** in
+
+1976. In this paper, lazy evaluation is introduced for suspending cons.
 
 > "(...) in fact, because of the suspending cons, z is initially bound only to a "promise" of this result."
 
@@ -16,18 +18,28 @@ Later, the `Future`[2] concept was introduced by **Henry Baker** and **Carl Hewi
 on the *Actor model* of concurrent programming at MIT. This concept was introduced in order to exhibit a new approach
 for function evaluation with a call-by-future introducing fine grain parallelism.
 
-> "This paper investigates some problems associated with an argument evaluation order that we call "future' order, which is different from both call-by-name and call-by-value. In call-by-future, each formal parameter of a function is bound to a separate process (called a "future") dedicated to the evaluation of the corresponding argument."
+> "This paper investigates some problems associated with an argument evaluation order that we call "future' order, which
+> is different from both call-by-name and call-by-value. In call-by-future, each formal parameter of a function is bound
+> to a separate process (called a "future") dedicated to the evaluation of the corresponding argument."
 
-- [1] [The impact of applicative programming on multiprocessing](https://www.bitsavers.org/pdf/ieee/Conference_on_Parallel_Processing/1976_International_Conference_on_Parallel_Processing.pdf) - Daniel P. Friedman, David S. Wise, pages 263-272.
-- [2] [The Incremental Garbage Collection of Processes](https://www.plover.com/misc/hbaker-archive/Futures.html) - Henry C. Baker, Jr. & Carl Hewitt.
+- [1] [The impact of applicative programming on multiprocessing](https://www.bitsavers.org/pdf/ieee/Conference_on_Parallel_Processing/1976_International_Conference_on_Parallel_Processing.pdf) -
+  Daniel P. Friedman, David S. Wise, pages 263-272.
+- [2] [The Incremental Garbage Collection of Processes](https://www.plover.com/misc/hbaker-archive/Futures.html) - Henry
+  C. Baker, Jr. & Carl Hewitt.
 
 ### Future in Java Concurrent library
 
-In Java, `Future<V>` is an interface that represents a task running asynchronously and that will produce a result of type `V` or an error indicated by an exception. A `Future` represents the result of an asynchronous calculation. Methods are provided to check whether the calculation is complete, to wait for it to finish, and to retrieve the result of the calculation. This approach allows for a direct programming style, but its major drawback is that it blocks the calculation while waiting for the result.
+In Java, `Future<V>` is an interface that represents a task running asynchronously and that will produce a result of
+type `V` or an error indicated by an exception. A `Future` represents the result of an asynchronous calculation. Methods
+are provided to check whether the calculation is complete, to wait for it to finish, and to retrieve the result of the
+calculation. This approach allows for a direct programming style, but its major drawback is that it blocks the
+calculation while waiting for the result.
 
 ### Introducing Promise in Java
 
-In the `Java Concurrent` library, a specific `Future` implementation called `CompletableFuture` provides both the direct style and an indirect style based on the continuation passing style i.e. CSP. In order to achieve a clear separation between the result receiver, i.e. `Future`, and the control, we decided to design `Promise` for this purpose.
+In the `Java Concurrent` library, a specific `Future` implementation called `CompletableFuture` provides both the direct
+style and an indirect style based on the continuation passing style i.e. CSP. In order to achieve a clear separation
+between the result receiver, i.e. `Future`, and the control, we decided to design `Promise` for this purpose.
 
 Then, a `Future` mainly provides direct style while a `Promise` provides Indirect style and a bridge for a direct style.
 
@@ -52,25 +64,37 @@ public interface Promise<T> {
 
 #### Callback hell
 
-TODO
+> (programming, colloquial) (mostly of the JavaScript language) The situation where callbacks are nested within other
+> callbacks several levels deep, potentially making it difficult to understand and maintain the code.
+
+This approach can be solved by design, explained in Martin Fowler book Refactoring, extracting code for a better layered
+code structuration. Unfortunately, it's only a matter of practice and programming experience which is not a de-facto idiomatic approach.   
 
 ## Async / Await
 
 ### Introduction
 
-> In computer programming, the async/await pattern is a syntactic feature of many programming languages that allows an asynchronous, non-blocking function to be structured in a way similar to an ordinary synchronous function.
+> In computer programming, the async/await pattern is a syntactic feature of many programming languages that allows an
+> asynchronous, non-blocking function to be structured in a way similar to an ordinary synchronous function.
 
-This approach allows for a direct style for asynchronous computation, but with one major key point, which is the ability to have non-blocking functionality even in a direct style.
+This approach allows for a direct style for asynchronous computation, but with one major key point, which is the ability
+to have non-blocking functionality even in a direct style.
 
 ### Non-blocking computation in Java 21+
 
 In Java 21+, thanks to the Loom project, the JVM is now equipped by virtual threads.
 
-> A virtual thread still runs code on an OS thread. However, when code running in a virtual thread calls a blocking I/O operation, the Java runtime suspends the virtual thread until it can be resumed. The OS thread associated with the suspended virtual thread is now free to perform operations for other virtual threads.
+> A virtual thread still runs code on an OS thread. However, when code running in a virtual thread calls a blocking I/O
+> operation, the Java runtime suspends the virtual thread until it can be resumed. The OS thread associated with the
+> suspended virtual thread is now free to perform operations for other virtual threads.
 
-Based on certain criteria, the JVM is able to suspend a virtual thread, thereby freeing up the platform thread that ensures its execution. To this end, thread `park` and `unpark` capabilities have been revised to offer specialized behavior depending on the nature of the thread, i.e., platform or virtual.
+Based on certain criteria, the JVM is able to suspend a virtual thread, thereby freeing up the platform thread that
+ensures its execution. To this end, thread `park` and `unpark` capabilities have been revised to offer specialized
+behavior depending on the nature of the thread, i.e., platform or virtual.
 
 ### Async / Await and virtual threads
+
+### Introduction
 
 TODO
 
@@ -78,19 +102,23 @@ TODO
 
 ```Java
 public interface Promise<T> {
-    
+
     // Indirect style section
-    
+
     <R> Promise<R> map(Function<? super T, ? extends R> mapper);
     <R> Promise<R> flatMap(Function<? super T, ? extends Promise<R>> flatMapper);
     Promise<T> onComplete(Consumer<? super Try<T>> fn);
-    
+
     // Direct style section
-    
+
     T await() throws Throwable;
     T await(Duration duration) throws Throwable;
 }
 ```
+
+### Design consideration
+
+TODO
 
 ### Taste of Tulya Async / Await
 
