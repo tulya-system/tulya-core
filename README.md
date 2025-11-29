@@ -9,7 +9,6 @@ Indirect and direct asynchronous programming style applied to Java and a minimal
 ### Introduction
 
 The `Promise`[1] concept in programming languages was introduced by **Daniel P. Friedman** and **David S. Wise** in
-
 1976. In this paper, lazy evaluation is introduced for suspending cons.
 
 > "(...) in fact, because of the suspending cons, z is initially bound only to a "promise" of this result."
