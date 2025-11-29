@@ -236,6 +236,9 @@ void shouldComputeDirectFibonacci() throws Throwable {
 
 > Configuration: Apple M2 Max, memory og 64GiB
 
+The actor on this bench immediately returns `Unit.unit` as soon as it receives a request. The measurements were taken 
+from 1_000 actors to 1_000_000 actors with a maximum of 10_000_000 requests.
+
 ##### With Platform threads
 
 > Average throughput: 1979 requests per milliseconds 

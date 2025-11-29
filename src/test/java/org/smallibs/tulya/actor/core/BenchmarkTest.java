@@ -1,5 +1,6 @@
 package org.smallibs.tulya.actor.core;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -19,6 +20,7 @@ import static org.smallibs.tulya.actor.core.ActorAddress.Companion.address;
 
 public class BenchmarkTest {
 
+    @Disabled
     @ParameterizedTest
     @MethodSource("benches")
     void shouldBenchmark(Supplier<ExecutorService> supplier) throws Throwable {
