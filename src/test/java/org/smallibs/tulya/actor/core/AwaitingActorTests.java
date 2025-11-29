@@ -22,7 +22,7 @@ class AwaitingActorTests {
 
             // When
             var promise = new SolvablePromise<Unit>();
-            sender.ask(new Request(promise, Duration.ofMillis(1000), receiver));
+            sender.tell(new Request(promise, Duration.ofMillis(1000), receiver));
 
             // Then
             Assertions.assertEquals(Unit.unit, promise.await(Duration.ofMillis(1200)));
@@ -36,11 +36,11 @@ class AwaitingActorTests {
             var sender = coordinator.register(address("sender"), sender()).orElseThrow();
             var receiver = coordinator.register(address("receiver"), receiver(Try.success(Unit.unit))).orElseThrow();
 
-            sender.ask(new Request(new SolvablePromise<>(), Duration.ofMillis(1000), receiver));
+            sender.tell(new Request(new SolvablePromise<>(), Duration.ofMillis(1000), receiver));
 
             // When
             var promise = new SolvablePromise<Unit>();
-            sender.ask(new Request(promise, Duration.ofMillis(2000), receiver));
+            sender.tell(new Request(promise, Duration.ofMillis(2000), receiver));
 
             // Then
             Assertions.assertEquals(Unit.unit, promise.await(Duration.ofMillis(2200)));

@@ -1,5 +1,6 @@
 plugins {
     id("java")
+    id("me.champeau.jmh") version "0.7.3"
 }
 
 group = "tulya-core"
@@ -17,6 +18,10 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("org.awaitility:awaitility:4.3.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+sourceSets.jmh {
+    java.srcDirs("src/jmh/java")
 }
 
 tasks.test {

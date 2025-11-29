@@ -35,7 +35,7 @@ record Ball(int stage, ActorReference<Ball> reference, Solvable<String> winnerIs
 record PingPong(@Override ActorReference<Ball> self, Random random) implements Behavior<Ball> {
     public void ask(Ball message) {
         if (message.stage() < random.nextInt(100) + 10) {
-            message.reference().ask(new Ball(message.stage() + 1, self, message.winnerIs()));
+            message.reference().tell(new Ball(message.stage() + 1, self, message.winnerIs()));
         } else {
             message.winnerIs().solve(Try.success(self.address().name()));
         }
