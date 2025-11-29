@@ -241,13 +241,13 @@ from 1_000 actors to 1_000_000 actors with a maximum of 10_000_000 requests.
 
 ##### With Platform threads
 
-> Average throughput: 1979 requests per milliseconds 
+> Average throughput: 1_979 requests per milliseconds 
 
 ![platform-throughput.png](src/test/data/platform-throughput.png)
 
 ##### With Virtual threads
 
-> Average throughput: 1662 requests per milliseconds
+> Average throughput: 1_662 requests per milliseconds
 
 ![platform-throughput.png](src/test/data/platform-throughput.png)
 
