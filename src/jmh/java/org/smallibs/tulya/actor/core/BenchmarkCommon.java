@@ -1,10 +1,5 @@
 package org.smallibs.tulya.actor.core;
 
-import org.openjdk.jmh.annotations.Level;
-import org.openjdk.jmh.annotations.Param;
-import org.openjdk.jmh.annotations.Scope;
-import org.openjdk.jmh.annotations.Setup;
-import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.infra.Blackhole;
 import org.smallibs.tulya.actor.core.impl.BehaviorImpl;
 import org.smallibs.tulya.async.Promise;
@@ -22,6 +17,31 @@ import static org.smallibs.tulya.actor.core.ActorAddress.Companion.address;
 
 public abstract class BenchmarkCommon {
 
+    public abstract static class BenchStateCommon {
+        private final Supplier<ExecutorService> service;
+
+        private ActorCoordinator coordinator;
+        private List<ActorReference<Solvable<Unit>>> actors;
+
+        public BenchStateCommon(Supplier<ExecutorService> service) {
+            this.service = service;
+        }
+
+        public void doSetup() {
+            this.coordinator = ActorCoordinator.Companion.build(service.get());
+            this.actors = createActors(this.coordinator, this.nbActors());
+        }
+
+        abstract protected int nbActors();
+
+        abstract protected int nbMessages();
+
+        public void doTearDown() throws IOException {
+            this.coordinator.close();
+        }
+
+    }
+
     static List<ActorReference<Solvable<Unit>>> createActors(ActorCoordinator coordinator, int nbActors) {
         return IntStream.range(0, nbActors).mapToObj(i -> {
             try {
@@ -36,11 +56,9 @@ public abstract class BenchmarkCommon {
     }
 
     @SuppressWarnings("unchecked")
-    void benchmark(List<ActorReference<Solvable<Unit>>> actors, int nbMessages, Blackhole blackhole) throws Throwable {
-        var t0 = System.currentTimeMillis();
-
-        var responses = IntStream.range(0, nbMessages).mapToObj(i ->
-                actors.get(i % actors.size()).<Unit>ask(s -> s)
+    void benchmark(BenchStateCommon common, Blackhole blackhole) throws Throwable {
+        var responses = IntStream.range(0, common.nbMessages()).mapToObj(i ->
+                common.actors.get(i % common.actors.size()).<Unit>ask(s -> s)
         ).toArray(Promise[]::new);
 
         Promises.forall(responses).await();
