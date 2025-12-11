@@ -21,21 +21,21 @@ public interface ActorCoordinator extends Closeable {
     void close() throws IOException;
 
     final class Companion {
-        static ActorCoordinator build() {
+        public static ActorCoordinator build() {
             return build(
                     ActorUniverse.Companion.build(),
                     ActorRuntime.Companion.build(ActorRuntimeContext.Companion.build(), Executors.newVirtualThreadPerTaskExecutor())
             );
         }
 
-        static ActorCoordinator build(ExecutorService executor) {
+        public static ActorCoordinator build(ExecutorService executor) {
             return build(
                     ActorUniverse.Companion.build(),
                     ActorRuntime.Companion.build(ActorRuntimeContext.Companion.build(), executor)
             );
         }
 
-        static ActorCoordinator build(
+        private static ActorCoordinator build(
                 ActorUniverse universe,
                 ActorRuntime runtime
         ) {

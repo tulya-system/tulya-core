@@ -90,7 +90,7 @@ public class SolvableFuture<R> implements Solvable<R>, Future<R> {
     // Private section
 
     private R unsafeGet() throws ExecutionException {
-        return switch (status.unsafeGetResult()) {
+        return switch (status.unsafeGet()) {
             case Success<R>(var v) -> v;
             case Failure<R>(var e) -> {
                 if (e instanceof ExecutionException exception) {
@@ -129,7 +129,7 @@ public class SolvableFuture<R> implements Solvable<R>, Future<R> {
             return false;
         }
 
-        default Try<R> unsafeGetResult() {
+        default Try<R> unsafeGet() {
             return switch (this) {
                 case Status.Waiting<R>() -> throw new IllegalStateException(); // Impossible case / Need D.T. here
                 case Status.Cancelled<R>() -> Try.failure(new CancellationException());

@@ -54,6 +54,10 @@ public class ActorImpl<Protocol> implements Actor<Protocol> {
         return address;
     }
 
+    void release() {
+        release(Duration.ZERO);
+    }
+
     void release(Duration duration) {
         var activeActorAddress = getActiveActorAddress();
 
@@ -71,6 +75,10 @@ public class ActorImpl<Protocol> implements Actor<Protocol> {
         } else {
             throw new IllegalStateException("Actor %s is not processing a message".formatted(addressOf(this)));
         }
+    }
+
+    void acquire() throws Throwable {
+        acquire(Duration.ZERO);
     }
 
     void acquire(Duration duration) throws Throwable {

@@ -13,7 +13,8 @@ import static org.smallibs.tulya.actor.core.FibonacciActorsIntegrationTest.Fibon
 
 public class FibonacciActorsIntegrationTest {
 
-    private final int fibonacciLimit = 19;
+    private final int fibonacciLimit = 22;
+    private final int expectedResult = 17711;
 
     @Test
     void shouldComputeDirectFibonacci() throws Throwable {
@@ -25,7 +26,7 @@ public class FibonacciActorsIntegrationTest {
             var result = fibonacci.ask(fibonacci(fibonacciLimit));
 
             // Then
-            Assertions.assertEquals(4181, result.await());
+            Assertions.assertEquals(expectedResult, result.await());
         }
     }
 
@@ -39,7 +40,7 @@ public class FibonacciActorsIntegrationTest {
             var result = fibonacci.ask(fibonacci(fibonacciLimit));
 
             // Then
-            Assertions.assertEquals(4181, result.await());
+            Assertions.assertEquals(expectedResult, result.await());
         }
     }
 
@@ -53,7 +54,7 @@ public class FibonacciActorsIntegrationTest {
             var result = fibonacci.ask(fibonacci(fibonacciLimit));
 
             // Then
-            Assertions.assertEquals(4181, result.await());
+            Assertions.assertEquals(expectedResult, result.await());
         }
     }
 

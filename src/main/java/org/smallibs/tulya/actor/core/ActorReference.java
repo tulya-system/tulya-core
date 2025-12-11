@@ -21,18 +21,18 @@ public interface ActorReference<Protocol> {
     boolean tell(Protocol message);
 
     default <R> Promise<R> ask(BehaviorCall<Protocol, R> message) {
-        var response = this.<R>reponseHandler();
+        var response = this.<R>responseHandler();
         tell(message.apply(response.solvable()));
         return response;
     }
 
     void dispose();
 
-    <T> ResponseHandler<T> reponseHandler();
+    <T> ResponseHandler<T> responseHandler();
 
     default void delay(Duration duration) {
         try {
-            reponseHandler().await(duration);
+            responseHandler().await(duration);
         } catch (TimeoutException e) {
             // Nominal case
         } catch (Throwable e) {

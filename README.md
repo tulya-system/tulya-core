@@ -8,8 +8,8 @@ Indirect and direct asynchronous programming style applied to Java and a minimal
 
 ### Introduction
 
-The `Promise`[1] concept in programming languages was introduced by **Daniel P. Friedman** and **David S. Wise** in
-1976. In this paper, lazy evaluation is introduced for suspending cons.
+In 1976, The `Promise`[1] concept in programming languages was introduced by **Daniel P. Friedman** and **David S. Wise
+**. In this paper, lazy evaluation is introduced for suspending cons.
 
 > "(...) in fact, because of the suspending cons, z is initially bound only to a "promise" of this result."
 
@@ -47,8 +47,11 @@ Then, a `Future` mainly provides direct style while a `Promise` provides Indirec
 ```Java
 public interface Future<V> {
     boolean cancel(boolean mayInterruptIfRunning);
+
     boolean isCancelled();
+
     boolean isDone();
+
     V get() throws InterruptedException, ExecutionException;
 }
 ```
@@ -56,7 +59,9 @@ public interface Future<V> {
 ```Java
 public interface Promise<T> {
     <R> Promise<R> map(Function<? super T, ? extends R> mapper);
+
     <R> Promise<R> flatMap(Function<? super T, ? extends Promise<R>> flatMapper);
+
     Promise<T> onComplete(Consumer<? super Try<T>> fn);
 }
 ```
@@ -67,7 +72,8 @@ public interface Promise<T> {
 > callbacks several levels deep, potentially making it difficult to understand and maintain the code.
 
 This approach can be solved by design, explained in Martin Fowler book Refactoring, extracting code for a better layered
-code structuration. Unfortunately, it's only a matter of practice and programming experience which is not a de-facto idiomatic approach.   
+code structuration. Unfortunately, it's only a matter of practice and programming experience which is not a de-facto
+idiomatic approach.
 
 ## Async / Await
 
@@ -95,7 +101,7 @@ behavior depending on the nature of the thread, i.e., platform or virtual.
 
 ### Introduction
 
-TODO
+
 
 ### Promise revisited
 
@@ -105,12 +111,15 @@ public interface Promise<T> {
     // Indirect style section
 
     <R> Promise<R> map(Function<? super T, ? extends R> mapper);
+
     <R> Promise<R> flatMap(Function<? super T, ? extends Promise<R>> flatMapper);
+
     Promise<T> onComplete(Consumer<? super Try<T>> fn);
 
     // Direct style section
 
     T await() throws Throwable;
+
     T await(Duration duration) throws Throwable;
 }
 ```
@@ -235,12 +244,12 @@ void shouldComputeDirectFibonacci() throws Throwable {
 
 > Configuration: Apple M2 Max, memory og 64GiB
 
-The actor on this bench immediately returns `Unit.unit` as soon as it receives a request. The measurements were taken 
+The actor on this bench immediately returns `Unit.unit` as soon as it receives a request. The measurements were taken
 from 1_000 actors up to 1_000_000 actors with a maximum of 10_000_000 requests.
 
 ##### With Platform threads
 
-> Average throughput: 1_985 requests per milliseconds 
+> Average throughput: 1_985 requests per milliseconds
 
 ![platform-throughput.png](src/jmh/data/platform-throughput.png)
 

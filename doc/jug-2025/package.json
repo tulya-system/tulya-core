@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "reveal.js": "^5.2.1",
+    "reveal.js-mermaid-plugin": "^11.6.0"
+  }
+}

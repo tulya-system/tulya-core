@@ -32,10 +32,10 @@ public class ActorPromiseImpl<T> implements Promise<T> {
             var actor = mayBeActor.get();
 
             try {
-                actor.release(Duration.ZERO);
+                actor.release();
                 return promise.await();
             } finally {
-                actor.acquire(Duration.ZERO);
+                actor.acquire();
             }
         } else {
             return promise.await();
