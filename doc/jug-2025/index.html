@@ -267,7 +267,7 @@
         </section>
 
         <section>
-            <h3> Live coding session </h3>
+            <h3> Code analysis </h3>
         </section>
 
         <section>
@@ -401,13 +401,13 @@
         </section>
 
         <section>
-            <h3> Live coding session </h3>
+            <h3> Code analysis </h3>
         </section>
 
         <section>
             <h3> Is it relevant for Java 21+? </h3>
 
-            <p> Philosophy adopted for the Java </p>
+            <p> Philosophy adopted for Java </p>
 
             <ul style="list-style-type: none; padding:20px; background-color: black; border: black solid 1px">
                 <li class="fragment"><b>Implicit</b> asynchronous function (e.g. I/O)</li>
@@ -568,7 +568,7 @@
         <section>
             <h3> The Actor Model </h3>
 
-            <p><b> Using Promise map (and flatMap) </b></p>
+            <p><b> Using Promise + map (and flatMap) </b></p>
 
             <ul style="list-style-type: none;">
                 <li class="fragment"> Ease actor-to-actor communication</li>
@@ -673,11 +673,15 @@
                     participant B as Actor B
 
                     activate BA
-                    BA-->>+B: Message(Request+Promise)
-                    BA-->>BA: Promise.await()
+                    BA-->>B: Message(Request+Promise)
+                    B->>BB: Request+Promise
+                    activate BB
+                    BA-->> A: release(A)
                     deactivate BA
-                    B->>+BB: Request+Promise
+                    BA-->>BA: Promise.await()
                     BB-->>BA:Promise.solve(Response)
+                    BA-->>A:Acquire
+                    A->>BA:Acquired
                     activate BA
                     deactivate BB
                     deactivate BA
@@ -686,7 +690,16 @@
         </section>
 
         <section>
-            <h3> Live coding session </h3>
+            <h3> Code analysis </h3>
+        </section>
+
+        <section>
+            <h3> Conclusion </h3>
+
+            <p class="fragment"> Direct vs. Indirect programming styles </p>
+            <p class="fragment"> Direct style privileged for Java </p>
+            <p class="fragment"> Alt. with Promise, Future and Async/Await </p>
+            <p class="fragment"> Complexity when dealing with computation models</p>
         </section>
 
         <section>
