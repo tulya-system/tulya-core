@@ -8,6 +8,9 @@ import org.smallibs.tulya.standard.Unit;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static java.util.concurrent.Executors.newFixedThreadPool;
+import static java.util.concurrent.Executors.newThreadPerTaskExecutor;
+
 public interface Async extends AutoCloseable {
     <R> Promise<R> run(SupplierWithError<R> callable);
 
@@ -15,11 +18,11 @@ public interface Async extends AutoCloseable {
 
     class Companion {
         static Async ofVirtual() {
-            return new AsyncImpl(Executors.newThreadPerTaskExecutor(Thread.ofVirtual().name("async:virtual").factory()));
+            return Companion.of(newThreadPerTaskExecutor(Thread.ofVirtual().name("async:virtual").factory()));
         }
 
         static Async ofPlatform(int size) {
-            return new AsyncImpl(Executors.newFixedThreadPool(size, Thread.ofPlatform().name("async:platform").factory()));
+            return Companion.of(newFixedThreadPool(size, Thread.ofPlatform().name("async:platform").factory()));
         }
 
         static Async of(ExecutorService executorService) {

@@ -1,0 +1,1069 @@
+<!doctype html>
+<html class="en">
+
+<head>
+    <meta charset="utf-8">
+
+    <title>Async/Await in Java 21+</title>
+
+    <meta name="description" content="Async/Await in Java 21+">
+    <meta name="author" content="Didier Plaindoux">
+
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="./node_modules/reveal.js/dist/reset.css">
+    <link rel="stylesheet" href="./node_modules/reveal.js/dist/reveal.css">
+    <link rel="stylesheet" href="./node_modules/reveal.js/dist/theme/dracula.css" id="theme">
+
+    <!-- Theme used for syntax highlighting of code -->
+    <link rel="stylesheet" href="./node_modules/reveal.js/plugin/highlight/monokai.css">
+</head>
+
+<style>
+    ul {
+        list-style-type: none;
+    }
+</style>
+
+<body>
+
+<div class="reveal">
+    <div class="slides">
+        <section>
+            <h2> Async/Await in Java 21+ </h2>
+
+            <img src="images/MySelf.png" alt="Didier Plaindoux"
+                 style="width: 150px; height: 150px; border-radius: 20%; object-fit: cover; ">
+            <br>
+            <h4> Didier Plaindoux </h4>
+            <div>
+                <img style="vertical-align:middle" width="40" src="images/mastodon.svg" alt="">
+                <small style="vertical-align:middle">@dplaindoux@functional.cafe</small>
+            </div>
+        </section>
+
+        <section>
+            <h3> Self-Promotion / Open Source </h3>
+
+            <ul style="list-style-type: none;">
+                <li class="fragment"><a href="https://github.com/d-plaindoux/celma">Celma</a> Generalized parser
+                    combinator in Rust
+                </li>
+
+                <li class="fragment"><a href="https://github.com/d-plaindoux/apacen-lang">Apacen-lang</a>
+                    Naïve constraint Prolog in Kotlin
+                </li>
+
+                <li class="fragment"><a href="https://github.com/womate/tulya">Tulya</a>
+                    Async/Await and Actor system in language-java
+                </li>
+
+                <li class="fragment"><a href="https://github.com/womate/tulya">Ephel</a>
+                    Language with Ambient Calculus in Ocaml
+                </li>
+            </ul>
+        </section>
+
+        <section>
+            <h2> A matter of style! </h2>
+            <h3 class="fragment"> Indirect vs. Direct </h3>
+        </section>
+
+        <section>
+            <h3> Indirect style </h3>
+
+            <p class="fragment"> Control is passed explicitly to a Callback </p>
+
+            <div class="r-stack">
+                <pre class="fragment"><code class="language-java" style="font-size: smaller">
+    doSomething(a ->
+
+
+
+
+
+
+
+    )
+                </code></pre>
+                <pre class="fragment"><code class="language-java" style="font-size: smaller">
+    doSomething(a ->
+      doSomething1(a, b ->
+
+
+
+
+
+      )
+    )
+                </code></pre>
+                <pre class="fragment"><code class="language-java" style="font-size: smaller">
+    doSomething(a ->
+      doSomething1(a, b ->
+        doSomething2(a, b, c ->
+
+
+
+        )
+      )
+    )
+                </code></pre>
+                <pre class="fragment"><code class="language-java" style="font-size: smaller">
+    doSomething(a ->
+      doSomething1(a, b ->
+        doSomething2(a, b, c ->
+          doSomething3(a, b, c, d ->
+
+          )
+        )
+      )
+    )
+                </code></pre>
+                <pre class="fragment"><code class="language-java" style="font-size: smaller">
+    doSomething(a ->
+      doSomething1(a, b ->
+        doSomething2(a, b, c ->
+          doSomething3(a, b, c, d ->
+            ...
+          )
+        )
+      )
+    )
+                </code></pre>
+            </div>
+        </section>
+
+        <section>
+            <h3> Indirect style </h3>
+
+            <p class="fragment"><b>Continuation Passing Style aka CPS</b></p>
+
+            <div class="r-stack">
+                <pre class="fragment"><code class="language-java" style="font-size: smaller">
+    doSomething(a ->
+      doSomething1(a, b ->
+        doSomething2(a, b, c ->
+          doSomething3(a, b, c, d ->
+            ...
+          )
+        )
+      )
+    )
+                </code></pre>
+                <pre class="fragment"><code class="language-java" style="font-size: smaller">
+    k -> doSomething(a ->
+           doSomething1(a, b ->
+             doSomething2(a, b, c ->
+               doSomething3(a, b, c, d ->
+                 ... k
+               )
+             )
+           )
+         )
+                    </code></pre>
+            </div>
+
+            <p class="fragment"><a href="https://xavierleroy.org/control-structures/book/main008.html#sec49">6.5 The CPS
+                transformation</a></p>
+
+        </section>
+
+        <section>
+            <h2> Indirect style </h2>
+
+            <h3 class="fragment"> Promise/Future </h3>
+        </section>
+
+        <section>
+            <h3> Promise </h3>
+
+            <p><b>"(...) in fact, because of the suspending cons, z is initially bound only to a "promise" of this
+                result."</b></p>
+        </section>
+
+        <section>
+            <h3> Promise </h3>
+
+            <p> Introduced by Daniel P. Friedman and David S. Wise in 1976. In this paper, <b>lazy evaluation</b> is
+                introduced for suspending cons. </p>
+
+            <p style="font-size: smaller">
+                <a href="https://www.bitsavers.org/pdf/ieee/Conference_on_Parallel_Processing/1976_International_Conference_on_Parallel_Processing.pdf">
+                    The impact of applicative programming on multiprocessing</a> <br> Daniel P. Friedman and David
+                S.
+                Wise.
+            </p>
+        </section>
+
+        <section>
+            <h3> Future </h3>
+
+            <p><b>"In call-by-future, each function parameter is bound to a separate process (called a 'future')
+                dedicated to the evaluation of the corresponding argument."</b></p>
+
+        </section>
+
+        <section>
+            <h3> Future </h3>
+
+            <p> Introduced by Henry Baker and Carl Hewitt in 1977 as part of their work on the <b>Actor model</b> of
+                concurrent programming at MIT. </p>
+
+            <p style="font-size: smaller">
+                <a href="https://www.plover.com/misc/hbaker-archive/Futures.html">
+                    The Incremental Garbage Collection of Processes</a> <br> Henry C. Baker and Jr. & Carl Hewitt.
+            </p>
+        </section>
+
+        <section>
+            <h3> Back to Java </h3>
+            <h4 class="fragment"> java.util.concurrent.Future </h4>
+            <pre class="fragment"><code>
+public interface Future&ltV> {
+    boolean cancel(boolean mayInterruptIfRunning);
+
+    boolean isCancelled();
+    boolean isDone();
+
+    V get() throws ExecutionException, InterruptedException;
+    V get(long timeout, TimeUnit unit) throws TimeoutException,
+      ExecutionException, InterruptedException;
+}
+            </code></pre>
+        </section>
+
+        <section>
+            <h3> Promise for Indirect style </h3>
+
+            <div class="r-stack" style="font-size: smaller">
+                <pre class="fragment fade-in-then-out"><code class="language-java">
+ public interface Promise&lt;T> {
+
+
+
+
+
+
+
+
+
+ }
+                </code></pre>
+                <pre class="fragment fade-in-then-out"><code class="language-java">
+ public interface Promise&lt;T> {
+
+   static Promise&lt;R> pure(R value) { ... }
+
+
+
+
+
+
+
+ }
+                </code></pre>
+                <pre class="fragment fade-in-then-out"><code class="language-java">
+ public interface Promise&lt;T> {
+
+   static Promise&lt;R> pure(R value) { ... }
+
+   &lt;R> Promise&lt;R> map(Function&lt;? super T, ? extends R> fn);
+
+
+
+
+
+ }
+                </code></pre>
+                <pre class="fragment fade-in-then-out"><code class="language-java">
+ public interface Promise&lt;T> {
+
+   static Promise&lt;R> pure(R value) { ... }
+
+   &lt;R> Promise&lt;R> map(Function&lt;? super T, ? extends R> fn);
+
+   &lt;R> Promise&lt;R> flatMap(Function&lt;? super T, ? extends Promise&lt;R>> fn);
+
+
+
+ }
+                </code></pre>
+                <pre class="fragment fade-in"><code class="language-java">
+ public interface Promise&lt;T> {
+
+   static Promise&lt;R> pure(R value) { ... }
+
+   &lt;R> Promise&lt;R> map(Function&lt;? super T, ? extends R> fn);
+
+   &lt;R> Promise&lt;R> flatMap(Function&lt;? super T, ? extends Promise&lt;R>> fn);
+
+   Promise&lt;T> onComplete(Consumer&lt;? super Try&lt;T>> fn);
+
+ }
+                </code></pre>
+            </div>
+
+            <p class="fragment"><b>Promise</b> is a <b>Monad</b> for Asynchronous Effects </p>
+
+        </section>
+
+        <section>
+            <h3> Example: Asynchronous Factorial </h3>
+
+            <div class="r-stack" style="font-size: smaller">
+            <pre class="fragment fade-in-then-out"><code class="language-java">
+    Promise&ltInteger> factorial(Async async, int value) {
+
+
+
+
+
+
+
+    }
+            </code></pre>
+                <pre class="fragment fade-in-then-out"><code class="language-java">
+    Promise&ltInteger> factorial(Async async, int value) {
+        if (value < 2) {
+            return Promise.pure(value);
+        } else {
+
+
+
+        }
+    }
+            </code></pre>
+                <pre class="fragment fade-in-then-out"><code class="language-java">
+    Promise&ltInteger> factorial(Async async, int value) {
+        if (value < 2) {
+            return Promise.pure(value);
+        } else {
+            return async.run(() -> factorial(async, value - 1))
+                // async.run : (() -> A) -> Promise&lt;A>
+                // Promise&lt;Promise&lt;Integer>>
+        }
+    }
+            </code></pre>
+                <pre class="fragment fade-in-then-out"><code class="language-java">
+    Promise&ltInteger> factorial(Async async, int value) {
+        if (value < 2) {
+            return Promise.pure(value);
+        } else {
+            return async.run(() -> factorial(async, value - 1))
+                .flatMap(r -> r)
+                // Promise&lt;Integer>
+        }
+    }
+            </code></pre>
+                <pre class="fragment fade-in-then-out"><code class="language-java">
+    Promise&ltInteger> factorial(Async async, int value) {
+        if (value < 2) {
+            return Promise.pure(value);
+        } else {
+            return async.run(() -> factorial(async, value - 1))
+                .flatMap(r -> r)
+                .map(v -> v * value);
+        }
+    }
+            </code></pre>
+            </div>
+        </section>
+
+        <section>
+            <h3> Indirect style and design </h3>
+
+            <p class="fragment"> Glorify the so-called <b>callback hell</b> dark pattern </p>
+        </section>
+
+        <section>
+            <h3> How to solve this callback hell? </h3>
+
+            <p class="fragment"> From Indirect to Direct style </h4>
+
+            <div class="r-stack">
+                <pre class="fragment"><code class="language-java" style="font-size: smaller">
+    doSomething(a ->
+      doSomething1(a, b ->
+        doSomething2(a, b, c ->
+          doSomething3(a, b, c, d ->
+            ...
+          )
+        )
+      )
+    )
+                </code></pre>
+                <pre class="fragment"><code class="language-java" style="font-size: smaller">
+    doSomething(a ->
+      doSomething1(a, b ->
+        doSomething2(a, b, c -> {
+            var d = doSomethingDirect3(a, b, c);
+            ...
+          }
+        )
+      )
+    )
+                </code></pre>
+                <pre class="fragment"><code class="language-java" style="font-size: smaller">
+    doSomething(a ->
+      doSomething1(a, b -> {
+          var c = doSomethingDirect2(a, b);
+          var d = doSomethingDirect3(a, b, c);
+          ...
+        }
+      )
+    )
+
+                </code></pre>
+                <pre class="fragment"><code class="language-java" style="font-size: smaller">
+    doSomething(a -> {
+        var b = doSomethingDirect1(a);
+        var c = doSomethingDirect2(a, b);
+        var d = doSomethingDirect3(a, b, c);
+        ...
+      }
+    )
+
+
+                </code></pre>
+                <pre class="fragment"><code class="language-java" style="font-size: smaller">
+    {
+      var a = doSomethingDirect();
+      var b = doSomethingDirect1(a);
+      var c = doSomethingDirect2(a, b);
+      var d = doSomethingDirect3(a, b, c);
+      ...
+    }
+
+
+                </code></pre>
+            </div>
+        </section>
+
+        <section>
+            <h3> How to solve this callback hell? </h3>
+
+            <p class="fragment"> Syntactic sugar for <b>Monad comprehension</b></p>
+        </section>
+
+        <section>
+            <a href="https://ncatlab.org/nlab/files/WadlerMonads.pdf">
+                <img width="700" src="./images/Comprehending.png">
+            </a>
+        </section>
+
+        <section>
+            <h3> Comprehending Monads </h3>
+
+            <p> Desugared in indirect style during compilation </p>
+        </section>
+
+        <section>
+            <h3> Scala for Comprehension </h3>
+
+            <div class="r-stack" style="font-size: smaller">
+            <pre class="fragment fade-in-then-out"><code class="language-scala">
+    for a <- doSomething()
+        b <- doSomething1(a)
+        c <- doSomething2(a, b)
+        d <- doSomething3(a, b, c)
+    yield ...
+
+
+
+
+            </code></pre>
+                <pre class="fragment fade-in-then-out"><code class="language-scala">
+    doSomething().flatMap(a ->
+        for b <- doSomething1(a)
+            c <- doSomething2(a, b)
+            d <- doSomething3(a, b, c)
+        yield ...
+    )
+
+
+
+            </code></pre>
+                <pre class="fragment fade-in-then-out"><code class="language-scala">
+    doSomething().flatMap(a ->
+        doSomething1(a).flatMap(b ->
+            for c <- doSomething2(a, b)
+                d <- doSomething3(a, b, c)
+            yield ...
+        )
+    )
+
+
+            </code></pre>
+                <pre class="fragment fade-in-then-out"><code class="language-scala">
+    doSomething().flatMap(a ->
+        doSomething1(a).flatMap(b ->
+            doSomething2(a, b).flatMap(c ->
+                for d <- doSomething3(a, b, c)
+                yield ...
+            )
+        )
+    )
+
+            </code></pre>
+                <pre class="fragment fade-in-then-out"><code class="language-scala">
+    doSomething().flatMap(a ->
+        doSomething1(a).flatMap(b ->
+            doSomething2(a, b).flatMap(c ->
+                doSomething3(a, b, c).map(d =>
+                    ...
+                )
+            )
+        )
+    )
+            </code></pre>
+            </div>
+        </section>
+
+        <section>
+            <h3> Back to Java </h3>
+
+            <p> No ability to extend the langage!</p>
+
+            <p class="fragment" style="text-decoration:line-through"> Syntactic sugar for <b>Monadic
+                comprehension</b>
+            </p>
+        </section>
+
+        <section>
+            <h3> How to solve this callback hell? </h3>
+
+            <p class="fragment"> Construction for <b>Asynchronous programming</b></p>
+        </section>
+
+        <section>
+            <h3> Async/Await approach </h3>
+
+            <ul style="list-style-type: none;">
+                <li class="fragment"><b>Asynchronous non-blocking</b> function</li>
+                <li class="fragment">Enable a <b>direct style</b> approach</li>
+            </ul>
+        </section>
+
+        <section>
+            <h3> Async/Await first class citizen </h3>
+
+            <ul style="list-style-type: none;">
+                <li><b>Asynchronous non-blocking</b> function</li>
+                <li> Enable a <b>direct style</b> approach</li>
+                <li class="fragment"><b>Idiomatic construction</b> managed during compilation</li>
+                <li class="fragment"><b>Colorized</b> functions</li>
+            </ul>
+            <p class="fragment"> C#, Javascript, Swift, Dart, Rust and ... Kotlin, C++</p>
+        </section>
+
+        <section>
+            <h3> Async/Await ~ Stack less </h3>
+
+            <ul style="list-style-type: none;">
+                <li>State Machine / Continuation Passing Style</li>
+            </ul>
+
+            <p class="fragment"> Extended syntax for explicit asynchronisms </p>
+            <p class="fragment"> At <b>compile time</b> without runtime support </p>
+        </section>
+
+        <section>
+            <h3> Stack full Approach </h3>
+
+            <ul style="list-style-type: none;">
+                <li class="fragment">Green* Threads support in the Runtime</li>
+                <li class="fragment">Approach adopted for Go, Java</li>
+                <li><br></li>
+                <li class="fragment" style="font-size: small">* lightweight, virtual ...</li>
+            </ul>
+
+        </section>
+
+        <section>
+            <h3> Loom Project </h3>
+
+            <ul style="list-style-type: none;">
+                <li class="fragment"> Fibers and Continuations for the JVM</li>
+                <li class="fragment"> Virtual threads vs. Platform threads</li>
+                <li class="fragment"> Scheduling: Cooperative vs. Preemptive</li>
+                <li class="fragment"> Revisited libraries e.g. <em>java.util.concurrent</em></li>
+                <li class="fragment"><b>Compatible with legacy code</b></li>
+            </ul>
+        </section>
+
+        <section>
+            <h3> Async/Await library in Java 21+ </h3>
+
+            <ul style="list-style-type: none;">
+                <li class="fragment"><b>Construction</b> managed during execution (DSL)</li>
+                <li class="fragment"><b>Asynchronous non-blocking</b> function</li>
+                <li class="fragment"> Enable a <b>direct style</b> approach</li>
+                <li class="fragment"> No <b>Colorized</b> functions</li>
+            </ul>
+        </section>
+
+        <section>
+            <h3> Promise and Direct style </h3>
+
+            <div class="r-stack" style="font-size: smaller">
+                <pre class="fade-in-then-out"><code class="language-java">
+ public interface Promise&lt;T> {
+
+    static Promise&lt;R> pure(R value) { ... }
+
+    &lt;R> Promise&lt;R> map(Function&lt;? super T, ? extends R> fn);
+
+    &lt;R> Promise&lt;R> flatMap(Function&lt;? super T, ? extends Promise&lt;R>> fn);
+
+    Promise&lt;T> onComplete(Consumer&lt;? super Try&lt;T>> consumer);
+
+
+
+ }
+                </code></pre>
+                <pre class="fragment fade-in-then-out"><code class="language-java">
+ public interface Promise&lt;T> {
+
+    static Promise&lt;R> pure(R value) { ... }
+
+    &lt;R> Promise&lt;R> map(Function&lt;? super T, ? extends R> fn);
+
+    &lt;R> Promise&lt;R> flatMap(Function&lt;? super T, ? extends Promise&lt;R>> fn);
+
+    Promise&lt;T> onComplete(Consumer&lt;? super Try&lt;T>> consumer);
+
+    T await() throws Throwable;
+
+ }
+                </code></pre>
+            </div>
+
+        </section>
+
+        <section>
+            <h3> Asynchronous code in Java 21+ </h3>
+
+            <h4><b>Philosophy adopted for Java</b></h4>
+
+            <ul style="list-style-type: none; padding:20px; background-color: black; border: black solid 1px">
+                <li class="fragment"><b>Implicit</b> asynchronous function (e.g. I/O)</li>
+                <li class="fragment"><b>Continuation</b> only for internal use</li>
+                <li class="fragment"><b>Direct style</b> remains idiomatic</li>
+                <li class="fragment">Support thanks to <b>Virtual Threads</b></li>
+            </ul>
+        </section>
+
+        <section>
+            <h3> Asynchronous code in Java 21+? </h3>
+
+            <h4><b>Using Async/Await DSL</b></h4>
+
+            <ul style="list-style-type: none; padding:20px; background-color: black; border: black solid 1px">
+                <li class="fragment"><b>Explicit</b> asynchronous function</li>
+                <li class="fragment"><b>Ability</b> to manage parallelism</li>
+                <li class="fragment">Done thanks to <b>Virtual Thread Parking</b></li>
+            </ul>
+
+            <p class="fragment">Mandatory for specific computation models</p>
+        </section>
+
+        <section>
+            <h3> Inefficient Fibonacci sequence </h3>
+
+            <div class="r-stack">
+                <pre class="fragment fade-in-then-out"><code class="language-java">
+  // Async#run : () -> T -> Promise&lt;T>
+
+  int fibonacci(Async async, int v) throws Throwable {
+
+
+
+
+
+
+  }
+                </code></pre>
+                <pre class="fragment fade-in-then-out"><code class="language-java">
+  // Async#run : () -> T -> Promise&lt;T>
+
+  int fibonacci(Async async, int v) throws Throwable {
+    if (v &lt; 2) return v;
+
+
+
+
+
+  }
+                </code></pre>
+                <pre class="fragment fade-in-then-out"><code class="language-java">
+  // Async#run : () -> T -> Promise&lt;T>
+
+  int fibonacci(Async async, int v) throws Throwable {
+    if (v &lt; 2) return v;
+
+    var i = async.run(() -> fibonacci(async, v - 1))        ;
+
+
+
+  }
+                </code></pre>
+                <pre class="fragment fade-in-then-out"><code class="language-java">
+  // Async#run : () -> T -> Promise&lt;T>
+
+  int fibonacci(Async async, int v) throws Throwable {
+    if (v &lt; 2) return v;
+
+    var i = async.run(() -> fibonacci(async, v - 1)).await();
+
+
+
+  }
+                </code></pre>
+                <pre class="fragment fade-in-then-out"><code class="language-java">
+  // Async#run : () -> T -> Promise&lt;T>
+
+  int fibonacci(Async async, int v) throws Throwable {
+    if (v &lt; 2) return v;
+
+    var i = async.run(() -> fibonacci(async, v - 1)).await();
+    var j = async.run(() -> fibonacci(async, v - 2)).await();
+
+
+  }
+                </code></pre>
+                <pre class="fragment fade-in-then-out"><code class="language-java">
+  // Async#run : () -> T -> Promise&lt;T>
+
+  int fibonacci(Async async, int v) throws Throwable {
+    if (v &lt; 2) return v;
+
+    var i = async.run(() -> fibonacci(async, v - 1)).await();
+    var j = async.run(() -> fibonacci(async, v - 2)).await();
+
+    return i + j;
+  }
+                </code></pre>
+                <pre class="fragment fade-in-then-out"><code class="language-java">
+  // Async#run : () -> T -> Promise&lt;T>
+
+  int fibonacci(Async async, int v) throws Throwable {
+    if (v &lt; 2) return v;
+
+    var i = async.run(() -> fibonacci(async, v - 1));
+    var j = async.run(() -> fibonacci(async, v - 2));
+
+    return i.await() + j.await();
+  }
+            </code></pre>
+            </div>
+        </section>
+
+        <section>
+            <h3> REX with the Actor Model </h3>
+        </section>
+
+        <section>
+            <h3> The Actor Model </h3>
+
+            <p><b> Basic building block of concurrent computation</b></p>
+
+            <ul style="list-style-type: none;">
+                <li class="fragment"> Send messages to other actors</li>
+                <li class="fragment"> Create new actors</li>
+                <li class="fragment"> Designate the next behavior to be used</li>
+                <li class="fragment"> Only one message processed per turn</li>
+            </ul>
+
+        </section>
+
+        <section>
+            <h3> Request / Response pattern </h3>
+            <div class="mermaid">
+                <pre>
+            %%{init: {'theme': 'dark', 'themeVariables': { 'darkMode': true }}}%%
+            sequenceDiagram
+                    box rgb(33,66,99)
+                    participant A as Actor A
+                    participant BA0 as Behavior A0
+                    participant BA1 as Behavior A1
+                    end
+                    box rgb(33,66,99)
+                    participant BB as Behavior B
+                    participant B as Actor B
+                    end
+
+                    activate BA0
+                    BA0-->>B: Message(Request)
+                    B->>BB: Request
+                    activate BB
+                    BB-->>A:Message(Response)
+                    BA0->>A: Behavior(A1)
+                    deactivate BA0
+                    A->>BA1:Response
+                    activate BA1
+                    BB->>B: Behavior(B1)
+                    deactivate BB
+                    BA1->>A: Behavior(A2)
+                    deactivate BA1
+                </pre>
+            </div>
+        </section>
+
+        <section>
+            <h3> The Actor Model </h3>
+
+            <p><b> Using Promise await </b></p>
+
+            <ul style="list-style-type: none;">
+                <li class="fragment"> Ease actor-to-actor communication</li>
+                <li class="fragment"> Deal with promise and <b>await</b> capability</li>
+            </ul>
+
+        </section>
+
+        <section>
+            <h3> The Actor Model + await</h3>
+            <div class="mermaid">
+                <pre>
+            %%{init: {'theme': 'dark', 'themeVariables': { 'darkMode': true }}}%%
+            sequenceDiagram
+                    box rgb(33,66,99)
+                    participant A as Actor A
+                    participant BA as Behavior A
+                    end
+                    box rgb(33,66,99)
+                    participant BB as Behavior B
+                    participant B as Actor B
+                    end
+
+
+                    activate BA
+                    BA-->>+B: Message(Request+Promise)
+                    BA-->>BA: Promise.await()
+                    B->>+BB: Request+Promise
+                    BB-->>BA:Promise.solve(Response)
+                    BB->>B: Behavior(B1)
+                    deactivate BB
+                    BA->>A: Behavior(A2)
+                    deactivate BA
+                </pre>
+            </div>
+        </section>
+
+        <section>
+            <h3> The Actor Model + map</h3>
+            <div class="mermaid">
+                <pre>
+            %%{init: {'theme': 'dark', 'themeVariables': { 'darkMode': true }}}%%
+            sequenceDiagram
+                    box rgb(33,66,99)
+                    participant A as Actor A
+                    participant BA as Behavior A
+                    end
+                    box rgb(33,66,99)
+                    participant BB as Behavior B
+                    participant B as Actor B
+                    end
+
+                    activate BA
+                    BA-->>B: Message(Request+Promise)
+                    B->>BB: Request+Promise
+                    activate BB
+                    BA-->>BA: Promise.map(f)
+                    BA->>A: Behavior(A2)
+                    deactivate BA
+                    BB-->>BA:Promise.solve(Response)
+                    activate BA
+                    BA->>BA: Execute f
+                    BB->>B: Behavior(B1)
+                    deactivate BB
+                    deactivate BA
+                </pre>
+            </div>
+        </section>
+
+        <section>
+            <h3> The Actor Model </h3>
+
+            <p><b> Using Promise + map (and flatMap) </b></p>
+
+            <ul style="list-style-type: none;">
+                <li> Ease actor-to-actor communication</li>
+                <li class="fragment"><b style="color: lightcoral">Behavior atomicity is BROKEN</b></li>
+                <li class="fragment"><b style="color: lightcoral">Only one message processed per turn is BROKEN</b>
+                </li>
+            </ul>
+
+        </section>
+
+        <section>
+            <h3> The "ALMOST" Actor Model v1 </h3>
+
+            <p><b> Basic building block of concurrent computation</b></p>
+
+            <ul style="list-style-type: none;">
+                <li class="fragment"> Send messages to other actors</li>
+                <li class="fragment"> Create new actors</li>
+                <li class="fragment" style="text-decoration: line-through"> Designate the next behavior to be used
+                </li>
+                <li class="fragment"> Only one message processed per turn</li>
+            </ul>
+
+        </section>
+
+        <section>
+            <h3> The "ALMOST" Actor Model + map</h3>
+            <div class="mermaid">
+                <pre>
+            %%{init: {'theme': 'dark', 'themeVariables': { 'darkMode': true }}}%%
+            sequenceDiagram
+                    box rgb(33,66,99)
+                    participant A as Actor A
+                    participant BA as Behavior A
+                    end
+                    box rgb(33,66,99)
+                    participant BB as Behavior B
+                    participant B as Actor B
+                    end
+
+                    activate BA
+                    BA-->>B: Message(Request+ActorPromise)
+                    B->>BB: Request+ActorPromise
+                    activate BB
+                    BA-->>BA: ActorPromise.map(Message(Deferred(f)) to A)
+                    deactivate BA
+                    BB-->>BA:ActorPromise.solve(Response)
+                    BA-->>A:Message(Deferred(f))
+                    deactivate BB
+                    A->>BA:Deferred(f)
+                    activate BA
+                    BA->>BA: Execute f
+                    deactivate BA
+                </pre>
+            </div>
+        </section>
+
+        <section>
+            <h3> The "ALMOST" Actor Model </h3>
+
+            <p><b> Basic building block of concurrent computation</b></p>
+
+            <ul style="list-style-type: none;">
+                <li class="fragment"> Send messages to other actors</li>
+                <li class="fragment"> Create new actors</li>
+                <li class="fragment" style="text-decoration: line-through"> Designate the next behavior to be used
+                </li>
+                <li class="fragment" style="text-decoration: line-through"> Only one message processed per turn</li>
+                <li class="fragment"> At most one thread per actor</li>
+            </ul>
+
+        </section>
+
+        <section>
+            <h3> The "ALMOST" Actor Model + await</h3>
+            <div class="mermaid">
+                <pre>
+            %%{init: {'theme': 'dark', 'themeVariables': { 'darkMode': true }}}%%
+            sequenceDiagram
+                    box rgb(33,66,99)
+                    participant A as Actor A
+                    participant BA as Behavior A
+                    participant SBA as System Behavior A
+                    end
+                    box rgb(33,66,99)
+                    participant BB as Behavior B
+                    participant B as Actor B
+                    end
+
+                    activate BA
+                    BA-->>B: Message(Request+ActorPromise)
+                    B->>BB: Request+ActorPromise
+                    activate BB
+                    BA-->> A: Release
+                    deactivate BA
+                    BA->>SBA: ActorPromise.await()
+                    activate SBA
+                    BB-->>SBA: ActorPromise.solve(Response)
+                    SBA-->>A:Message(Acquire(Promise))
+                    SBA->>SBA: Promise.await()
+                    A-->>SBA:Acquire(Promise)
+                    deactivate BB
+                    SBA->>BA:Promise.solve(Unit)
+                    deactivate SBA
+                    activate BA
+                    deactivate BA
+                </pre>
+            </div>
+        </section>
+
+        <section>
+            <h3> Async/Await DSL in Java 21+ </h3>
+
+            <ul style="list-style-type: none;">
+                <li class="fragment"> Specific promise behavior can be expressed </li>
+                <li class="fragment"> Direct style expressivity enabled </li>
+                <li class="fragment"> Relies on standard libraries (Java Concurrent) </li>
+            </ul>
+        </section>
+
+        <section>
+            <h3> Conclusion </h3>
+
+            <ul style="list-style-type: none;">
+                <li class="fragment"> Direct vs. Indirect programming styles</li>
+                <li class="fragment"> Alt. with Callback, Promise/Future and Async/Await</li>
+                <li class="fragment"> Direct style privileged thanks to Green Thread</li>
+                <li class="fragment"> Adaptability when dealing with computation models</li>
+            </ul>
+        </section>
+
+        <section>
+            <h3> Bibliography </h3>
+
+            <ul style="list-style-type: none;">
+                <li><a href="https://xavierleroy.org/control-structures/book/index.html">
+                    Control structures in programming languages</a>
+                </li>
+                <li>
+                    <a href="https://www.researchgate.net/publication/355361443_Kotlin_coroutines_design_and_implementation">
+                        Kotlin coroutines: design and implementation </a>
+                </li>
+            </ul>
+
+        </section>
+
+        <section>
+            <h2> Async/Await in Java 21+ </h2>
+
+            <p><b>Tulya Project</b>: Async/Await DSL and <br> Revisited Actor Model</p>
+            <img width="150" src="./images/github-qrcode.png">
+        </section>
+    </div>
+
+</div>
+
+<script src="./node_modules/reveal.js/dist/reveal.js"></script>
+<script src="./node_modules/reveal.js/plugin/zoom/zoom.js"></script>
+<script src="./node_modules/reveal.js/plugin/notes/notes.js"></script>
+<script src="./node_modules/reveal.js/plugin/search/search.js"></script>
+<script src="./node_modules/reveal.js/plugin/markdown/markdown.js"></script>
+<script src="./node_modules/reveal.js/plugin/highlight/highlight.js"></script>
+<script src="./node_modules/reveal.js-mermaid-plugin/plugin/mermaid/mermaid.js"></script>
+
+<script class="ts">
+    Reveal.initialize({
+        controls: false,
+        progress: true,
+        center: true,
+        hash: true,
+        transition: 'none',
+
+        plugins: [RevealHighlight, RevealMermaid]
+    });
+</script>
+
+</body>
+</html>
