@@ -457,7 +457,7 @@ public interface Future&ltV> {
         <section>
             <h3> Comprehending Monads </h3>
 
-            <p> Desugared in indirect style during compilation </p>
+            <p> <b>Desugared</b> into Indirect Style during compilation </p>
         </section>
 
         <section>
@@ -563,11 +563,11 @@ public interface Future&ltV> {
             <h3> Async/Await ~ Stack less </h3>
 
             <ul style="list-style-type: none;">
-                <li>State Machine / Continuation Passing Style</li>
+                <li class="fragment">State Machine / Continuation Passing Style</li>
+                <li class="fragment">Extended syntax for explicit asynchronisms</li>
+                <li class="fragment">During <b>compilation</b> without runtime support </p>
             </ul>
 
-            <p class="fragment"> Extended syntax for explicit asynchronisms </p>
-            <p class="fragment"> At <b>compile time</b> without runtime support </p>
         </section>
 
         <section>
@@ -583,7 +583,7 @@ public interface Future&ltV> {
         </section>
 
         <section>
-            <h3> Loom Project </h3>
+            <h3> The Loom Project </h3>
 
             <ul style="list-style-type: none;">
                 <li class="fragment"> Fibers and Continuations for the JVM</li>
@@ -763,6 +763,8 @@ public interface Future&ltV> {
 
         <section>
             <h3> REX with the Actor Model </h3>
+
+            <h4 class="fragment"> Actors interactions and Direct Style </h4>
         </section>
 
         <section>
@@ -781,7 +783,7 @@ public interface Future&ltV> {
 
         <section>
             <h3> Request / Response pattern </h3>
-            <div class="mermaid">
+            <div class="mermaid" style="width: 90%;height: 180em">
                 <pre>
             %%{init: {'theme': 'dark', 'themeVariables': { 'darkMode': true }}}%%
             sequenceDiagram
@@ -825,8 +827,8 @@ public interface Future&ltV> {
         </section>
 
         <section>
-            <h3> The Actor Model + await</h3>
-            <div class="mermaid">
+            <h3> The Actor Model with await</h3>
+            <div class="mermaid" style="width: 90%;height: 180em">
                 <pre>
             %%{init: {'theme': 'dark', 'themeVariables': { 'darkMode': true }}}%%
             sequenceDiagram
@@ -854,8 +856,8 @@ public interface Future&ltV> {
         </section>
 
         <section>
-            <h3> The Actor Model + map</h3>
-            <div class="mermaid">
+            <h3> The Actor Model with map</h3>
+            <div class="mermaid" style="width: 90%;height: 180em">
                 <pre>
             %%{init: {'theme': 'dark', 'themeVariables': { 'darkMode': true }}}%%
             sequenceDiagram
@@ -888,7 +890,7 @@ public interface Future&ltV> {
         <section>
             <h3> The Actor Model </h3>
 
-            <p><b> Using Promise + map (and flatMap) </b></p>
+            <p><b> Using Promise with map (and flatMap) </b></p>
 
             <ul style="list-style-type: none;">
                 <li> Ease actor-to-actor communication</li>
@@ -900,7 +902,7 @@ public interface Future&ltV> {
         </section>
 
         <section>
-            <h3> The "ALMOST" Actor Model v1 </h3>
+            <h3> Revisited Actor Model </h3>
 
             <p><b> Basic building block of concurrent computation</b></p>
 
@@ -915,8 +917,30 @@ public interface Future&ltV> {
         </section>
 
         <section>
-            <h3> The "ALMOST" Actor Model + map</h3>
-            <div class="mermaid">
+            <h3> Revisited Actor Model with map</h3>
+            <div class="r-stack">
+                <div class="mermaid fragment fade-in-then-out" style="width: 90%;height: 180em">
+                <pre>
+            %%{init: {'theme': 'dark', 'themeVariables': { 'darkMode': true }}}%%
+            sequenceDiagram
+                    box rgb(33,66,99)
+                    participant A as Actor A
+                    participant BA as Behavior A
+                    end
+                    box rgb(33,66,99)
+                    participant BB as Behavior B
+                    participant B as Actor B
+                    end
+
+                    activate BA
+                    BA-->>B: Message(Request+ActorPromise)
+                    B->>BB: Request+ActorPromise
+                    activate BB
+                    BA-->>BA: ActorPromise.map(Message(Deferred(f)) to A)
+                    deactivate BA
+                </pre>
+                </div>
+                <div class="mermaid fragment fade-in-then-out" style="width: 90%;height: 180em">
                 <pre>
             %%{init: {'theme': 'dark', 'themeVariables': { 'darkMode': true }}}%%
             sequenceDiagram
@@ -936,18 +960,47 @@ public interface Future&ltV> {
                     BA-->>BA: ActorPromise.map(Message(Deferred(f)) to A)
                     deactivate BA
                     BB-->>BA:ActorPromise.solve(Response)
+                    activate BA
                     BA-->>A:Message(Deferred(f))
+                    deactivate BA
+                    deactivate BB
+                </pre>
+                </div>
+                <div class="mermaid fragment fade-in-then-out" style="width: 90%;height: 180em">
+                <pre>
+            %%{init: {'theme': 'dark', 'themeVariables': { 'darkMode': true }}}%%
+            sequenceDiagram
+                    box rgb(33,66,99)
+                    participant A as Actor A
+                    participant BA as Behavior A
+                    end
+                    box rgb(33,66,99)
+                    participant BB as Behavior B
+                    participant B as Actor B
+                    end
+
+                    activate BA
+                    BA-->>B: Message(Request+ActorPromise)
+                    B->>BB: Request+ActorPromise
+                    activate BB
+                    BA-->>BA: ActorPromise.map(Message(Deferred(f)) to A)
+                    deactivate BA
+                    BB-->>BA:ActorPromise.solve(Response)
+                    activate BA
+                    BA-->>A:Message(Deferred(f))
+                    deactivate BA
                     deactivate BB
                     A->>BA:Deferred(f)
                     activate BA
                     BA->>BA: Execute f
                     deactivate BA
                 </pre>
+                </div>
             </div>
         </section>
 
         <section>
-            <h3> The "ALMOST" Actor Model </h3>
+            <h3> Revisited Actor Model </h3>
 
             <p><b> Basic building block of concurrent computation</b></p>
 
@@ -963,8 +1016,9 @@ public interface Future&ltV> {
         </section>
 
         <section>
-            <h3> The "ALMOST" Actor Model + await</h3>
-            <div class="mermaid">
+            <h3> Revisited Actor Model with await</h3>
+            <div class="r-stack">
+                <div class="mermaid fragment fade-in-then-out" style="width: 90%;height: 180em">
                 <pre>
             %%{init: {'theme': 'dark', 'themeVariables': { 'darkMode': true }}}%%
             sequenceDiagram
@@ -983,8 +1037,61 @@ public interface Future&ltV> {
                     B->>BB: Request+ActorPromise
                     activate BB
                     BA-->> A: Release
-                    deactivate BA
+                    activate SBA
                     BA->>SBA: ActorPromise.await()
+                    deactivate BA
+                </pre>
+                </div>
+                <div class="mermaid fragment fade-in-then-out" style="width: 90%;height: 180em">
+                <pre>
+            %%{init: {'theme': 'dark', 'themeVariables': { 'darkMode': true }}}%%
+            sequenceDiagram
+                    box rgb(33,66,99)
+                    participant A as Actor A
+                    participant BA as Behavior A
+                    participant SBA as System Behavior A
+                    end
+                    box rgb(33,66,99)
+                    participant BB as Behavior B
+                    participant B as Actor B
+                    end
+
+                    activate BA
+                    BA-->>B: Message(Request+ActorPromise)
+                    B->>BB: Request+ActorPromise
+                    activate BB
+                    BA-->> A: Release
+                    BA->>SBA: ActorPromise.await()
+                    deactivate BA
+                    activate SBA
+                    BB-->>SBA: ActorPromise.solve(Response)
+                    SBA-->>A:Message(Acquire(Promise))
+                    SBA->>SBA: Promise.await()
+                    deactivate BB
+                    deactivate SBA
+                </pre>
+                </div>
+                <div class="mermaid fragment fade-in-then-out" style="width: 90%;height: 180em">
+                <pre>
+            %%{init: {'theme': 'dark', 'themeVariables': { 'darkMode': true }}}%%
+            sequenceDiagram
+                    box rgb(33,66,99)
+                    participant A as Actor A
+                    participant BA as Behavior A
+                    participant SBA as System Behavior A
+                    end
+                    box rgb(33,66,99)
+                    participant BB as Behavior B
+                    participant B as Actor B
+                    end
+
+                    activate BA
+                    BA-->>B: Message(Request+ActorPromise)
+                    B->>BB: Request+ActorPromise
+                    activate BB
+                    BA-->> A: Release
+                    BA->>SBA: ActorPromise.await()
+                    deactivate BA
                     activate SBA
                     BB-->>SBA: ActorPromise.solve(Response)
                     SBA-->>A:Message(Acquire(Promise))
@@ -996,6 +1103,7 @@ public interface Future&ltV> {
                     activate BA
                     deactivate BA
                 </pre>
+                </div>
             </div>
         </section>
 
@@ -1003,9 +1111,9 @@ public interface Future&ltV> {
             <h3> Async/Await DSL in Java 21+ </h3>
 
             <ul style="list-style-type: none;">
-                <li class="fragment"> Specific promise behavior can be expressed </li>
-                <li class="fragment"> Direct style expressivity enabled </li>
-                <li class="fragment"> Relies on standard libraries (Java Concurrent) </li>
+                <li class="fragment"> Specific promise behavior can be expressed</li>
+                <li class="fragment"> Direct style expressivity enabled</li>
+                <li class="fragment"> Relies on standard libraries (Java Concurrent)</li>
             </ul>
         </section>
 
@@ -1013,7 +1121,7 @@ public interface Future&ltV> {
             <h3> Conclusion </h3>
 
             <ul style="list-style-type: none;">
-                <li class="fragment"> Direct vs. Indirect programming styles</li>
+                <li class="fragment"> From Indirect to Direct programming styles</li>
                 <li class="fragment"> Alt. with Callback, Promise/Future and Async/Await</li>
                 <li class="fragment"> Direct style privileged thanks to Green Thread</li>
                 <li class="fragment"> Adaptability when dealing with computation models</li>
@@ -1024,6 +1132,14 @@ public interface Future&ltV> {
             <h3> Bibliography </h3>
 
             <ul style="list-style-type: none;">
+                <li>
+                    <a href="https://devblogs.microsoft.com/dotnet/how-async-await-really-works/">
+                        How Async/Await Really Works in C#</a>
+                </li>
+                <li>
+                    <a href="https://github.com/swiftlang/swift-evolution/blob/main/proposals/0296-async-await.md">
+                        Async/await Swift Proposal </a>
+                </li>
                 <li><a href="https://xavierleroy.org/control-structures/book/index.html">
                     Control structures in programming languages</a>
                 </li>
@@ -1038,7 +1154,7 @@ public interface Future&ltV> {
         <section>
             <h2> Async/Await in Java 21+ </h2>
 
-            <p><b>Tulya Project</b>: Async/Await DSL and <br> Revisited Actor Model</p>
+            <p><b>Tulya Project</b><br> Async/Await DSL and Revisited Actor Model</p>
             <img width="150" src="./images/github-qrcode.png">
         </section>
     </div>
