@@ -26,15 +26,23 @@ public class PromiseAwaitTest {
             // When
             var promises = IntStream.range(0, numberOfTasks).mapToObj(__ ->
                     async.run(() -> {
-                        runningTasks.incrementAndGet();
+                        if (runningTasks.incrementAndGet() % 100000 == 0) {
+                            System.out.println(runningTasks.get());
+                        }
                         barrier.await();
-                        runningTasks.decrementAndGet();
+                        if (runningTasks.decrementAndGet() % 100000 == 0) {
+                            System.out.println(runningTasks.get());
+                        }
                     })
             ).toArray(Promise[]::new);
 
-            // Then - virtual thread saturation waiting on a barrier
+            // Then
+
+            // waiting on a barrier for virtual thread saturation
             Awaitility.await().until(() -> runningTasks.get() == numberOfTasks);
+            // solve the barrier
             barrier.success(Unit.unit);
+            // waiting for all virtual thread termination
             Awaitility.await().atMost(Duration.ofMinutes(1)).until(() -> runningTasks.get() == 0);
         }
     }
@@ -51,7 +59,10 @@ public class PromiseAwaitTest {
                     .mapToObj(__ ->
                             async.run(() -> {
                                 Thread.sleep(1_000);
-                                runningTasks.decrementAndGet();
+                                if (runningTasks.decrementAndGet() % 100000 == 0) {
+                                    System.out.println(runningTasks.get());
+                                }
+
                             })
                     ).toArray(Promise[]::new);
 

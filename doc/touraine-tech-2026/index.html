@@ -46,30 +46,35 @@
         </section>
 
         <section>
-            <h3> Self-Promotion / Open Source </h3>
+            <h3> Disclaimer </h3>
 
             <ul style="list-style-type: none;">
-                <li class="fragment"><a href="https://github.com/d-plaindoux/celma">Celma</a> Generalized parser
-                    combinator in Rust
-                </li>
+                <li class="fragment">This talk is not a deep dive on compilation</li>
+                <li class="fragment">This talk is mainly a return of experience</li>
+            </ul>
+        </section>
 
-                <li class="fragment"><a href="https://github.com/d-plaindoux/apacen-lang">Apacen-lang</a>
-                    Naïve constraint Prolog in Kotlin
-                </li>
+        <section>
+            <h3> Self-Promotion </h3>
 
-                <li class="fragment"><a href="https://github.com/womate/tulya">Tulya</a>
-                    Async/Await and Actor system in language-java
+            <ul style="list-style-type: none;">
+                <li class="fragment"><a href="https://www.immofix.com">Crédifix</a> real-Estate matchmaking and
+                    Negotiation system, integrating sustainability criteria.
+                    <br>
+                    <b>An ad-hoc Expert System in Prolog</b>
                 </li>
-
-                <li class="fragment"><a href="https://github.com/womate/tulya">Ephel</a>
-                    Language with Ambient Calculus in Ocaml
+                <br>
+                <li class="fragment"><a href="https://www.kaptngo.com">Akawan Kaptngo</a> secure distributed system
+                    for decentralized executions with streamlined communications.
+                    <br>
+                    <b>System in Java with Async/Await and actors</b>
                 </li>
             </ul>
         </section>
 
         <section>
-            <h2> A matter of style! </h2>
-            <h3 class="fragment"> Indirect vs. Direct </h3>
+            <h3> Asynchronous programming </h3>
+            <p class="fragment"> A matter of style! Indirect vs. Direct </p>
         </section>
 
         <section>
@@ -381,7 +386,7 @@ public interface Future&ltV> {
         <section>
             <h3> How to solve this callback hell? </h3>
 
-            <p class="fragment"> From Indirect to Direct style </h4>
+            <p class="fragment"> From Indirect to Direct style </p>
 
             <div class="r-stack">
                 <pre class="fragment"><code class="language-java" style="font-size: smaller">
@@ -457,7 +462,7 @@ public interface Future&ltV> {
         <section>
             <h3> Comprehending Monads </h3>
 
-            <p> <b>Desugared</b> into Indirect Style during compilation </p>
+            <p><b>Desugared</b> into Indirect Style during compilation </p>
         </section>
 
         <section>
@@ -565,7 +570,7 @@ public interface Future&ltV> {
             <ul style="list-style-type: none;">
                 <li class="fragment">State Machine / Continuation Passing Style</li>
                 <li class="fragment">Extended syntax for explicit asynchronisms</li>
-                <li class="fragment">During <b>compilation</b> without runtime support </p>
+                <li class="fragment">Managed and during <b>compilation</b></li>
             </ul>
 
         </section>
@@ -1140,12 +1145,17 @@ public interface Future&ltV> {
                     <a href="https://github.com/swiftlang/swift-evolution/blob/main/proposals/0296-async-await.md">
                         Async/await Swift Proposal </a>
                 </li>
-                <li><a href="https://xavierleroy.org/control-structures/book/index.html">
-                    Control structures in programming languages</a>
+                <li>
+                    <a href="https://www.youtube.com/watch?v=6nRS6UiN7X0">
+                        Continuations - Under the Covers #JVMLS
+                    </a>
                 </li>
                 <li>
                     <a href="https://www.researchgate.net/publication/355361443_Kotlin_coroutines_design_and_implementation">
                         Kotlin coroutines: design and implementation </a>
+                </li>
+                <li><a href="https://xavierleroy.org/control-structures/book/index.html">
+                    Control structures in programming languages</a>
                 </li>
             </ul>
 

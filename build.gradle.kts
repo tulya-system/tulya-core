@@ -27,5 +27,5 @@ sourceSets.jmh {
 tasks.test {
     useJUnitPlatform()
     minHeapSize = "1g"
-    maxHeapSize = "16g"
+    maxHeapSize = "8g"
 }
